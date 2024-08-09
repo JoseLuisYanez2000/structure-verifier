@@ -1,17 +1,17 @@
-# Structure Validator# structureValidatorLib 1.0.0
+# Structure Validator# structValidator 0.0.1
 
-structureValidatorLib is a typescrpt library to validate data of "any" type and to ensure that it corresponds to a data type.
+structValidator is a typescrpt library to validate data of "any" type and to ensure that it corresponds to a data type.
 
 ## Installation
 
 ```bash
-    npm install structurevalidator
+    npm install structValidator
 ```
 
 ## Example use
 
 ```typescript
-import { Validators as V,ValidationError } from "structurevalidator";
+import { Validators as V,ValidationError } from "structValidator";
 //////////Validator object creation
 const v = new V.VNumber();
 /////////Running validations
@@ -34,7 +34,7 @@ try {
 In case it is necessary to infer the type of the response, it is achieved by using InferType
 
 ```typescript
-    import { InferType } from "structurevalidator";
+    import { InferType } from "structValidator";
     
     const val = new V.VNumber();
     type valType = InferType<typeof val>;
