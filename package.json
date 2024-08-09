@@ -1,0 +1,31 @@
+{
+  "name": "structurevalidator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsc-watch --onSuccess \"node ./dist/test/test.js\"",
+    "clean": "rimraf dist/",
+    "test": "npm run clean && npx tsc && npx jest",
+    "test2": "tsc-watch --onSuccess \"node ./dist/index.test.js\"",
+    "publicar": "npm run clean && npx tsc && npx jest && npm version patch && npm publish"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.20",
+    "jest": "^29.7.0",
+    "rimraf": "^5.0.5",
+    "ts-jest": "^29.1.2",
+    "tsc-watch": "^6.0.4",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "moment-timezone": "^0.5.45"
+  }
+}
