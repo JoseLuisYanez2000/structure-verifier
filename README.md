@@ -1,4 +1,4 @@
-# structure-verifier 0.0.3
+# structure-verifier 0.0.4
 
 structure-verifier is a typescrpt library to validate data of "any" type and to ensure that it corresponds to a data type.
 
@@ -12,7 +12,7 @@ structure-verifier is a typescrpt library to validate data of "any" type and to 
 
 ```typescript
 import { Verifiers as V,VerificationError } from "structure-verifier";
-//////////Validator object creation
+//////////Verificator object creation
 const v = new V.VNumber();
 /////////Running validations
 
@@ -104,7 +104,7 @@ String Exclusive Conditions
     });
     ///// Validate a string or null that meets all conditions otherwise error (VerificationError)
 ```
-
+***
 ### Booleans 
 Validations for boolean data.
 
@@ -132,7 +132,7 @@ try {
     console.error(error);
 }
 ```
-
+***
 ### Objects 
 Validations for object data.
 
@@ -184,7 +184,7 @@ try {
     console.error(error);
 }
 ```
-
+***
 ### Arrays
 Validations for array data.
 
@@ -209,6 +209,32 @@ try {
     console.log(arrayVal.check(null));       // Output: null
     console.log(notNullArrayVal.check([1, 2]));   // Output: [1, 2]
     console.log(notNullArrayVal.check([1]));      // Throws VerificationError (array too short)
+} catch (error) {
+    console.error(error);
+}
+```
+***
+### Any 
+Validations for any data.
+
+```typescript
+const anyVal = new V.VAny(); // Returns any type
+```
+
+VAny Exclusive Conditions
+
+*No exclusive conditions for any validation*
+
+#### Example
+```typescript
+const anyVal = new V.VAny();
+
+try {
+    console.log(anyVal.check('true'));  // Output: true
+    console.log(anyVal.check('FALSE')); // Output: false
+    console.log(anyVal.check(null));    // Output: null
+    console.log(anyVal.check('1'));   // Output: true
+    console.log(anyVal.check(0));     // Output: false
 } catch (error) {
     console.error(error);
 }
