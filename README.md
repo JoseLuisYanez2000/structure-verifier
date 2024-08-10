@@ -184,3 +184,32 @@ try {
     console.error(error);
 }
 ```
+
+### Arrays
+Validations for array data.
+
+```typescript
+const arrayVal = new V.VArray({verifier:new V.VNumber()}); // Returns Array | null
+const notNullArrayVal = new V.VArrayNotNull({verifier:new V.VNumber()}); // Returns Array
+```
+
+Array Exclusive Conditions
+
+- **minLength**: Minimum length of the array.
+- **maxLength**: Maximum length of the array.
+
+#### Example
+```typescript
+const arrayVal = new V.VArray(new V.VNumber(), { minLength: 1, maxLength: 5 });
+const notNullArrayVal = new V.VArrayNotNull(new V.VNumber(), { minLength: 2 });
+
+try {
+    console.log(arrayVal.check([1, 2, 3]));  // Output: [1, 2, 3]
+    console.log(arrayVal.check([]));         // Throws VerificationError (array too short)
+    console.log(arrayVal.check(null));       // Output: null
+    console.log(notNullArrayVal.check([1, 2]));   // Output: [1, 2]
+    console.log(notNullArrayVal.check([1]));      // Throws VerificationError (array too short)
+} catch (error) {
+    console.error(error);
+}
+```

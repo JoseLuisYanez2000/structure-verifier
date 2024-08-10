@@ -1,3 +1,5 @@
+import { VAnyNotNull } from "./src/verifiers/any/v_any";
+import { VArray, VArrayNotNull } from "./src/verifiers/array/v_array";
 import { VBoolean, VBooleanNotNull } from "./src/verifiers/boolean/v_boolean";
 import { VNumber, VNumberNotNull } from "./src/verifiers/number/v_number";
 import { VObject, VObjectNotNull } from "./src/verifiers/object/v_object";
@@ -15,5 +17,8 @@ export const Verifiers = {
     VBoolean,
     VBooleanNotNull,
     VObjectNotNull,
-    VObject
+    VObject,
+    VArray,
+    VArrayNotNull,
+    VAnyNotNull
 }

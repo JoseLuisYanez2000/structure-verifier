@@ -1,36 +1,39 @@
 import { Verifiers as V } from "..";
+import { VerificationError } from "../src/error/v_error";
+import { VNumber, VNumberNotNull } from "../src/verifiers/number/v_number";
+import { VArrayNotNull } from '../src/verifiers/array/v_array';
+import { VObjectNotNull } from "../src/verifiers/object/v_object";
 
+const arrayVal = new V.VArray({ verifier: new V.VNumber() }); // Returns Array | null
+const notNullArrayVal = new V.VArrayNotNull({ verifier: new V.VNumber() }); // Returns Array
 
-const objectVal = new V.VObject({
-    properties: {
-        name: new V.VString({ minLength: 3 }),
-        age: new V.VNumber({ min: 18, max: 99 }),
-    },
-    strictMode: true,
-    ignoreCase: true,
-    invalidPropertyMessage: {
-        message: () => "no es una propiedad valida",
-        val: undefined
-    }
-});
-
-const notNullObjectVal = new V.VObjectNotNull({
-    properties: {
-        name: new V.VStringNotNull({ minLength: 3 }),
-        age: new V.VNumberNotNull({ min: 18, max: 99 }),
-    },
-    strictMode: true,
-    ignoreCase: true,
-    invalidPropertyMessage: {
-        message: () => "invalid property",
-        val: undefined
-    }
+const myArrayVerifier = new V.VArray({
+    verifier: new VObjectNotNull({
+        properties: {
+            name: new V.VStringNotNull({ minLength: 1, maxLength: 5 }),
+            age: new VNumberNotNull({ min: 18, max: 100 }),
+        }
+    }),
+    minLength: 2,
+    maxLength: 5,
 });
 
 try {
-    console.log(objectVal.check({ name: 'John', ages: 25 }));  // Output: { name: 'John', age: 25 }
-    console.log(objectVal.check(null));                      // Output: null
-    console.log(notNullObjectVal.check({ name: 'Jane', age: 30 }));   // Output: { name: 'Jane', age: 30 }
+    const result = myArrayVerifier.check([{
+        name: "John",
+        age: 25
+    }, {
+        name: "Jane",
+        age: 30
+    }]);
+
+    console.log(result);
+    // for (const r of result) {
+    //     console.log(`${r.name} is ${r.age} years old`);
+    // }
+
 } catch (error) {
-    console.error(error);
+    if (error instanceof VerificationError) {
+        console.error("Errores de validación:", error.errorsObj);
+    }
 }
