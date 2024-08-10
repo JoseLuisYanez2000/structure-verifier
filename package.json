@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoseLuisYanez2000/structure-verifier.git"
+  },
   "scripts": {
     "dev": "tsc-watch --onSuccess \"node ./dist/test/test.js\"",
     "clean": "rimraf dist/",
@@ -14,7 +18,7 @@
     ".": "./dist/index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Jose Luis Yañez Macias",
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^29.5.12",

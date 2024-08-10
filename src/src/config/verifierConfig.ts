@@ -1,3 +1,3 @@
-export class ValConfig {
+export class VerifierConfig {
     static lang: 'en' | 'es' = 'es';
 }

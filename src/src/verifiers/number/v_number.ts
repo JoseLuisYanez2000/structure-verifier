@@ -1,9 +1,9 @@
-import { ValidationError } from "../../error/v_error";
+import { VerificationError } from "../../error/v_error";
 import { IInfo, MessageType, VBadTypeMessage, VDefaultValue, VVCIsRequired } from "../../interfaces/types";
 import { getMessage, IMessageLanguage, getValue } from '../../languages/message';
-import { Validation } from "../validator";
+import { Verifier } from "../verifier";
 
-interface VNumberConditions extends VBadTypeMessage, VDefaultValue<number>, VVCIsRequired,IInfo<number> {
+interface VNumberConditions extends VBadTypeMessage, VDefaultValue<number>, VVCIsRequired, IInfo<number> {
     min?: MessageType<number, { min: number }>;
     max?: MessageType<number, { max: number }>;
     in?: MessageType<number[], { in: number[] }>;
@@ -12,7 +12,7 @@ interface VNumberConditions extends VBadTypeMessage, VDefaultValue<number>, VVCI
     minDecimalPlaces?: MessageType<number, { minDecimalPlaces: number }>;
 }
 
-interface VNumberDefaultMessages{
+interface VNumberDefaultMessages {
     min: IMessageLanguage<{ min: number }>
     max: IMessageLanguage<{ max: number }>
     in: IMessageLanguage<{ in: number[] }>
@@ -22,7 +22,7 @@ interface VNumberDefaultMessages{
     badTypeMessage: IMessageLanguage<void>
 }
 
-const dMessages:VNumberDefaultMessages={
+const dMessages: VNumberDefaultMessages = {
     min: {
         es: (values: { min: number; }) => `debe ser mayor o igual a ${values.min}`,
         en: (values: { min: number; }) => `must be greater or equal to ${values.min}`
@@ -57,38 +57,38 @@ const dMessages:VNumberDefaultMessages={
 
 function vNumber(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VNumberConditions): number {
     if (data === '' || isNaN(data)) {
-        throw new ValidationError([{
+        throw new VerificationError([{
             key: "",
             message: getMessage(conds?.badTypeMessage != undefined ? conds?.badTypeMessage : undefined, undefined, badTypeMessage)
         }])
     }
     if (conds?.min !== undefined) {
         if (data < conds?.min) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
-                message: getMessage(conds?.min, { min: getValue(conds?.min) },dMessages.min )
+                message: getMessage(conds?.min, { min: getValue(conds?.min) }, dMessages.min)
             }])
         }
     }
     if (conds?.max !== undefined) {
         if (data > conds?.max) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
-                message: getMessage(conds?.max, { max: getValue(conds?.max) },dMessages.max )
+                message: getMessage(conds?.max, { max: getValue(conds?.max) }, dMessages.max)
             }])
         }
     }
     if (conds?.in !== undefined) {
         if (!getValue(conds?.in).includes(data)) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
-                message: getMessage(conds?.in, { in: getValue(conds?.in) },dMessages.in )
+                message: getMessage(conds?.in, { in: getValue(conds?.in) }, dMessages.in)
             }])
         }
     }
     if (conds?.notIn !== undefined) {
         if (getValue(conds?.notIn).includes(data)) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
                 message: getMessage(conds?.notIn, { notIn: getValue(conds?.notIn) }, dMessages.notIn)
             }])
@@ -97,7 +97,7 @@ function vNumber(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VNum
     const decimalPart = data.toString().split(".")[1] || '';
     if (conds?.maxDecimalPlaces !== undefined) {
         if (decimalPart.length > getValue(conds?.maxDecimalPlaces)) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
                 message: getMessage(conds?.maxDecimalPlaces, { maxDecimalPlaces: getValue(conds?.maxDecimalPlaces) }, dMessages.maxDecimalPlaces)
             }])
@@ -105,7 +105,7 @@ function vNumber(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VNum
     }
     if (conds?.minDecimalPlaces !== undefined) {
         if (decimalPart.length < getValue(conds?.minDecimalPlaces)) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
                 message: getMessage(conds?.minDecimalPlaces, { minDecimalPlaces: getValue(conds?.minDecimalPlaces) }, dMessages.minDecimalPlaces)
             }])
@@ -114,8 +114,8 @@ function vNumber(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VNum
     return Number(data);
 }
 
-export class VNumberNotNull extends Validation<number> {
-    validate(data: any): number {
+export class VNumberNotNull extends Verifier<number> {
+    check(data: any): number {
         return vNumber(this.isRequired(data, true), this.badTypeMessage, this.cond);
     }
     constructor(protected cond?: VNumberConditions) {
@@ -124,8 +124,8 @@ export class VNumberNotNull extends Validation<number> {
     }
 }
 
-export class VNumber extends Validation<number | null> {
-    validate(data: any): number | null {
+export class VNumber extends Verifier<number | null> {
+    check(data: any): number | null {
         let val = this.isRequired(data);
         if (val === null || val === undefined) {
             return null;

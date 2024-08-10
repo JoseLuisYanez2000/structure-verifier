@@ -1,5 +1,4 @@
-import { ValConfig } from "../config/validatorConfig";
-
+import { VerifierConfig } from "../config/verifierConfig";
 export interface IMessageLanguage<K> {
     es: (values: K) => string,
     en: (values: K) => string,
@@ -21,7 +20,7 @@ export function getValue<T, K>(m: MessageType<T, K>): T {
 
 export function getMessage<T, K>(m: MessageType<T, K>, values: K, message: IMessageLanguage<K>): string {
     if (m instanceof RegExp) {
-        return message[ValConfig.lang](values);
+        return message[VerifierConfig.lang](values);
     }
     if (typeof m === 'object' && m !== null && 'val' in m && 'message' in m) {
         if ('message' in m) {
@@ -29,5 +28,5 @@ export function getMessage<T, K>(m: MessageType<T, K>, values: K, message: IMess
         }
         throw new Error("Invalid object structure");
     }
-    return message[ValConfig.lang](values);
+    return message[VerifierConfig.lang](values);
 }

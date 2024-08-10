@@ -1,4 +1,4 @@
-# Structure Validator# structure-verifier 0.0.1
+# structure-verifier 0.0.2
 
 structure-verifier is a typescrpt library to validate data of "any" type and to ensure that it corresponds to a data type.
 
@@ -11,23 +11,23 @@ structure-verifier is a typescrpt library to validate data of "any" type and to 
 ## Example use
 
 ```typescript
-import { Validators as V,ValidationError } from "structure-verifier";
+import { Verifiers as V,VerificationError } from "structure-verifier";
 //////////Validator object creation
 const v = new V.VNumber();
 /////////Running validations
 
 try {
-    let value = v.validate(10);
+    let value = v.check(10);
     /////////Will get the value without error
 } catch (error:any) {
-    console.log(error as ValidationError);
+    console.log(error as VerificationError);
 }
 
 try {
-    let value = v.validate('TEST');
+    let value = v.check('TEST');
 } catch (error:any) {
     ///////////Will get the error, because the value is not a number
-    console.log(error as ValidationError);
+    console.log(error as VerificationError);
 }
 ```
 ## Types
@@ -70,7 +70,7 @@ Number exclusive conditions
         maxDecimalPlaces: 0,
         minDecimalPlaces: 0
     });
-    /////Validate a number or null that meets all conditions otherwise error (ValidationError)
+    /////Validate a number or null that meets all conditions otherwise error (VerificationError)
 ```
 ***
 ### Strings 
@@ -102,7 +102,7 @@ String Exclusive Conditions
         strictMode: true,
         ignoreCase: true
     });
-    ///// Validate a string or null that meets all conditions otherwise error (ValidationError)
+    ///// Validate a string or null that meets all conditions otherwise error (VerificationError)
 ```
 
 ### Booleans 
@@ -123,11 +123,11 @@ const booleanVal = new V.VBoolean();
 const notNullBooleanVal = new V.VBooleanNotNull();
 
 try {
-    console.log(booleanVal.validate('true'));  // Output: true
-    console.log(booleanVal.validate('FALSE')); // Output: false
-    console.log(booleanVal.validate(null));    // Output: null
-    console.log(notNullBooleanVal.validate('1'));   // Output: true
-    console.log(notNullBooleanVal.validate(0));     // Output: false
+    console.log(booleanVal.check('true'));  // Output: true
+    console.log(booleanVal.check('FALSE')); // Output: false
+    console.log(booleanVal.check(null));    // Output: null
+    console.log(notNullBooleanVal.check('1'));   // Output: true
+    console.log(notNullBooleanVal.check(0));     // Output: false
 } catch (error) {
     console.error(error);
 }
@@ -158,8 +158,8 @@ const objectVal = new V.VObject({
     strictMode: true,
     ignoreCase: true,
     invalidPropertyMessage: {
-        es: () => "propiedad no válida",
-        en: () => "invalid property"
+        message: () => "no es una propiedad valida",
+        val: undefined
     }
 });
 
@@ -171,15 +171,15 @@ const notNullObjectVal = new V.VObjectNotNull({
     strictMode: true,
     ignoreCase: true,
     invalidPropertyMessage: {
-        es: () => "propiedad no válida",
-        en: () => "invalid property"
+        message: () => "no es una propiedad valida",
+        val: undefined
     }
 });
 
 try {
-    console.log(objectVal.validate({ name: 'John', age: 25 }));  // Output: { name: 'John', age: 25 }
-    console.log(objectVal.validate(null));                      // Output: null
-    console.log(notNullObjectVal.validate({ name: 'Jane', age: 30 }));   // Output: { name: 'Jane', age: 30 }
+    console.log(objectVal.check({ name: 'John', age: 25 }));  // Output: { name: 'John', age: 25 }
+    console.log(objectVal.check(null));                      // Output: null
+    console.log(notNullObjectVal.check({ name: 'Jane', age: 30 }));   // Output: { name: 'Jane', age: 30 }
 } catch (error) {
     console.error(error);
 }

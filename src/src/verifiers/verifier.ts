@@ -1,11 +1,11 @@
-import { ValConfig } from "../config/validatorConfig";
-import { ValidationError } from "../error/v_error";
+import { VerifierConfig } from "../config/verifierConfig";
+import { VerificationError } from "../error/v_error";
 import { VVCIsRequired } from "../interfaces/types";
-import { getMessage, getValue, IMessageLanguage, MessageType } from "../languages/message";
+import { getMessage, IMessageLanguage, MessageType } from "../languages/message";
 
-export abstract class Validation<T> {
+export abstract class Verifier<T> {
     constructor(protected cond?: VVCIsRequired) { }
-    abstract validate(data: any): T;
+    abstract check(data: any): T;
     protected badTypeMessage: IMessageLanguage<void>
     protected isRequired(data: any, isRequired?: boolean): T {
         let mReq: IMessageLanguage<void> = {
@@ -28,9 +28,9 @@ export abstract class Validation<T> {
             }
         }
         if (isRequired && (data === null || data === undefined)) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
-                message: `${getMessage(reqVal, undefined, mReq)} ${this.badTypeMessage[ValConfig.lang]()}`
+                message: `${getMessage(reqVal, undefined, mReq)} ${this.badTypeMessage[VerifierConfig.lang]()}`
             }])
         }
         return data as T;

@@ -1,7 +1,7 @@
-import { ValidationError } from "../../error/v_error";
+import { VerificationError } from "../../error/v_error";
 import { MessageType, VBadTypeMessage, VDefaultValue, VVCIsRequired } from "../../interfaces/types";
 import { getMessage, IMessageLanguage, getValue } from '../../languages/message';
-import { Validation } from "../validator";
+import { Verifier } from "../verifier";
 
 interface VStringConditions extends VBadTypeMessage, VDefaultValue<string>, VVCIsRequired {
     minLength?: MessageType<number, { minLength: number }>;
@@ -17,7 +17,7 @@ interface VStringConditions extends VBadTypeMessage, VDefaultValue<string>, VVCI
 
 function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStringConditions): string {
     if (typeof data !== 'string' && conds?.strictMode === true) {
-        throw new ValidationError([{
+        throw new VerificationError([{
             key: "",
             message: getMessage(conds?.badTypeMessage != undefined ? conds?.badTypeMessage : undefined, undefined, badTypeMessage)
         }])
@@ -25,7 +25,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
     data = String(data);
     if (conds?.minLength !== undefined) {
         if (data.length < conds?.minLength) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
                 message: getMessage(conds?.minLength, { minLength: getValue(conds?.minLength) }, {
                     es: (values: { minLength: number; }) => `debe tener una longitud mínima de ${values.minLength}`,
@@ -36,7 +36,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
     }
     if (conds?.maxLength !== undefined) {
         if (data.length > conds?.maxLength) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
                 message: getMessage(conds?.maxLength, { maxLength: getValue(conds?.maxLength) }, {
                     es: (values: { maxLength: number; }) => `debe tener una longitud máxima de ${values.maxLength}`,
@@ -47,7 +47,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
     }
     if (conds?.regex !== undefined) {
         if (!getValue(conds?.regex).test(data)) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
                 message: getMessage(conds?.regex, { regex: getValue(conds?.regex) }, {
                     es: (values: { regex: RegExp; }) => `debe cumplir con el patrón ${values.regex}`,
@@ -58,7 +58,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
     }
     if (conds?.notRegex !== undefined) {
         if (getValue(conds?.notRegex).test(data)) {
-            throw new ValidationError([{
+            throw new VerificationError([{
                 key: "",
                 message: getMessage(conds?.notRegex, { notRegex: getValue(conds?.notRegex) }, {
                     es: (values: { notRegex: RegExp; }) => `no debe cumplir con el patrón ${values.notRegex}`,
@@ -70,7 +70,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
     if (conds?.in !== undefined) {
         if (conds?.ignoreCase === true) {
             if (!getValue(conds?.in).map(x => x.toLowerCase()).includes(data.toLowerCase())) {
-                throw new ValidationError([{
+                throw new VerificationError([{
                     key: "",
                     message: getMessage(conds?.in, { in: getValue(conds?.in) }, {
                         es: (values: { in: string[]; }) => `debe ser uno de los siguientes valores ${values.in.join(", ")}`,
@@ -80,7 +80,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
             }
         } else {
             if (!getValue(conds?.in).includes(data)) {
-                throw new ValidationError([{
+                throw new VerificationError([{
                     key: "",
                     message: getMessage(conds?.in, { in: getValue(conds?.in) }, {
                         es: (values: { in: string[]; }) => `debe ser uno de los siguientes valores ${values.in.join(", ")}`,
@@ -93,7 +93,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
     if (conds?.notIn !== undefined) {
         if (conds?.ignoreCase === true) {
             if (getValue(conds?.notIn).map(x => x.toLowerCase()).includes(data.toLowerCase())) {
-                throw new ValidationError([{
+                throw new VerificationError([{
                     key: "",
                     message: getMessage(conds?.notIn, { notIn: getValue(conds?.notIn) }, {
                         es: (values: { notIn: string[]; }) => `no debe ser uno de los siguientes valores ${values.notIn.join(", ")}`,
@@ -103,7 +103,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
             }
         } else {
             if (getValue(conds?.notIn).includes(data)) {
-                throw new ValidationError([{
+                throw new VerificationError([{
                     key: "",
                     message: getMessage(conds?.notIn, { notIn: getValue(conds?.notIn) }, {
                         es: (values: { notIn: string[]; }) => `no debe ser uno de los siguientes valores ${values.notIn.join(", ")}`,
@@ -117,8 +117,8 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
 
 }
 
-export class VStringNotNull extends Validation<string> {
-    validate(data: any): string {
+export class VStringNotNull extends Verifier<string> {
+    check(data: any): string {
         return vString(this.isRequired(data, true), this.badTypeMessage, this.cond);
     }
     constructor(protected cond?: VStringConditions) {
@@ -130,8 +130,8 @@ export class VStringNotNull extends Validation<string> {
     }
 }
 
-export class VString extends Validation<string | null> {
-    validate(data: any): string | null {
+export class VString extends Verifier<string | null> {
+    check(data: any): string | null {
         let val = this.isRequired(data);
         if (val === null || val === undefined) {
             return null;

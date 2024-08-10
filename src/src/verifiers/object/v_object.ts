@@ -1,9 +1,9 @@
-import { ValidationError } from "../../error/v_error";
+import { VerificationError } from "../../error/v_error";
 import { messageResp, MessageType, VBadTypeMessage, VDefaultValue, VVCIsRequired } from "../../interfaces/types";
 import { getMessage, IMessageLanguage, getValue } from '../../languages/message';
 import { VAnyNotNull } from "../any/v_any";
 import { VArray, VArrayNotNull } from "../array/v_array";
-import { Validation } from "../validator";
+import { Verifier } from "../verifier";
 
 interface VObjectConditions<T> extends VBadTypeMessage, VDefaultValue<T>, VVCIsRequired {
     invalidPropertyMessage?: MessageType<void, void>;
@@ -14,9 +14,9 @@ interface VObjectConditions<T> extends VBadTypeMessage, VDefaultValue<T>, VVCIsR
 }
 
 
-function vObject<T extends Record<string, Validation<any>>>(data: any, badTypeMessage: IMessageLanguage<void>, conds: VObjectConditions<T>): { [K in keyof T]: ReturnType<T[K]['validate']> } {
+function vObject<T extends Record<string, Verifier<any>>>(data: any, badTypeMessage: IMessageLanguage<void>, conds: VObjectConditions<T>): { [K in keyof T]: ReturnType<T[K]['check']> } {
     if (typeof data !== 'object' || Array.isArray(data)) {
-        throw new ValidationError([{
+        throw new VerificationError([{
             key: "",
             message: getMessage(conds?.badTypeMessage != undefined ? conds?.badTypeMessage : undefined, undefined, badTypeMessage)
         }])
@@ -33,12 +33,12 @@ function vObject<T extends Record<string, Validation<any>>>(data: any, badTypeMe
         else
             dif = keysData.filter(v => !keysValidations.includes(v))
         if (dif.length > 0) {
-            let error = new ValidationError(
+            let error = new VerificationError(
                 dif.map(v => {
                     return {
                         key: v, message: getMessage(conds.invalidPropertyMessage, undefined, {
-                            es: () => "propiedad no válida",
-                            en: () => "invalid property"
+                            es: () => "no es una propiedad válida",
+                            en: () => "is not a valid property"
                         })
                     }
                 })
@@ -48,7 +48,7 @@ function vObject<T extends Record<string, Validation<any>>>(data: any, badTypeMe
         }
     }
     let errors: messageResp[] = [];
-    let value:any={}
+    let value: any = {}
     let m: { keyV: string, keyD: string }[] = [];
     for (const key in conds.properties) {
         if (conds.ignoreCase) {
@@ -80,10 +80,10 @@ function vObject<T extends Record<string, Validation<any>>>(data: any, badTypeMe
     }
     for (let keys of m) {
         try {
-            const result = conds.properties[keys.keyV].validate(data[keys.keyD]);
+            const result = conds.properties[keys.keyV].check(data[keys.keyD]);
             value[keys.keyV] = result;
         } catch (error: any) {
-            if (error instanceof ValidationError) {
+            if (error instanceof VerificationError) {
                 errors.push(...error.errorsObj.map(v => {
                     if (!v.key) v.key = keys.keyV
                     if (conds.properties[keys.keyV] instanceof VObject || conds.properties[keys.keyV] instanceof VObjectNotNull || conds.properties[keys.keyV] instanceof VArray || conds.properties[keys.keyV] instanceof VArrayNotNull || conds.properties[keys.keyV] instanceof VAnyNotNull)
@@ -99,13 +99,13 @@ function vObject<T extends Record<string, Validation<any>>>(data: any, badTypeMe
 
     }
     if (errors.length > 0) {
-        throw new ValidationError(errors)
+        throw new VerificationError(errors)
     }
     return value;
 }
 
-export class VObjectNotNull<T extends Record<string, Validation<any>>> extends Validation<{ [K in keyof T]: ReturnType<T[K]['validate']> }> {
-    validate(data: any): { [K in keyof T]: ReturnType<T[K]['validate']> } {
+export class VObjectNotNull<T extends Record<string, Verifier<any>>> extends Verifier<{ [K in keyof T]: ReturnType<T[K]['check']> }> {
+    check(data: any): { [K in keyof T]: ReturnType<T[K]['check']> } {
         return vObject(this.isRequired(data, true), this.badTypeMessage, this.cond);
     }
     constructor(protected cond: VObjectConditions<T>) {
@@ -117,8 +117,8 @@ export class VObjectNotNull<T extends Record<string, Validation<any>>> extends V
     }
 }
 
-export class VObject<T extends Record<string, Validation<any>>> extends Validation<{ [K in keyof T]: ReturnType<T[K]['validate']> } | null> {
-    validate(data: any): { [K in keyof T]: ReturnType<T[K]['validate']> } | null {
+export class VObject<T extends Record<string, Verifier<any>>> extends Verifier<{ [K in keyof T]: ReturnType<T[K]['check']> } | null> {
+    check(data: any): { [K in keyof T]: ReturnType<T[K]['check']> } | null {
         let val = this.isRequired(data);
         if (val === null || val === undefined) {
             return null;
