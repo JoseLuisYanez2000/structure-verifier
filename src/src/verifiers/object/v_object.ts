@@ -1,7 +1,7 @@
 import { VerificationError } from "../../error/v_error";
 import { messageResp, MessageType, VBadTypeMessage, VDefaultValue, VVCIsRequired } from "../../interfaces/types";
-import { getMessage, IMessageLanguage, getValue } from '../../languages/message';
-import { VAnyNotNull } from "../any/v_any";
+import { getMessage, IMessageLanguage } from '../../languages/message';
+import { VAny } from "../any/v_any";
 import { VArray, VArrayNotNull } from "../array/v_array";
 import { Verifier } from "../verifier";
 
@@ -86,7 +86,7 @@ function vObject<T extends Record<string, Verifier<any>>>(data: any, badTypeMess
             if (error instanceof VerificationError) {
                 errors.push(...error.errorsObj.map(v => {
                     if (!v.key) v.key = keys.keyV
-                    if (conds.properties[keys.keyV] instanceof VObject || conds.properties[keys.keyV] instanceof VObjectNotNull || conds.properties[keys.keyV] instanceof VArray || conds.properties[keys.keyV] instanceof VArrayNotNull || conds.properties[keys.keyV] instanceof VAnyNotNull)
+                    if (conds.properties[keys.keyV] instanceof VObject || conds.properties[keys.keyV] instanceof VObjectNotNull || conds.properties[keys.keyV] instanceof VArray || conds.properties[keys.keyV] instanceof VArrayNotNull || conds.properties[keys.keyV] instanceof VAny)
                         v.parent = keys.keyV + (v.parent ? '.' + v.parent : '')
                     v.isEmpty = undefined
                     return v;
