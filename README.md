@@ -239,3 +239,51 @@ try {
     console.error(error);
 }
 ```
+***
+### Date 
+Validations for date data (depends Moment).
+
+```typescript
+    const vdate = new V.VDate();
+    const vdateNotNull = new V.VDateNotNull();
+```
+
+VDate Exclusive Conditions
+
+- **format**: Specifies the date format to be validated against.
+- **timeZone**: Specifies the expected time zone of the input date.
+- **maxDate**: Specifies the maximum allowed date.
+- **minDate**: Specifies the minimum allowed date.
+
+#### Example
+#### Basic Date Validation
+
+```typescript
+const vdate = new V.VDate();
+console.log(vdate.check("2023-08-09")?.format("YYYY-MM-DD")); // Output: "2023-08-09"
+```
+
+#### Date with Specific Format
+
+```typescript
+const vdate = new V.VDate({ format: "DD/MM/YYYY" });
+console.log(vdate.check("09/08/2023")?.format("DD/MM/YYYY")); // Output: "09/08/2023"
+```
+
+#### Date with Time Zone
+
+```typescript
+const vdate = new V.VDate({ timeZone: "America/New_York" });
+const result = vdate.check("2023-08-09T10:00:00");
+console.log(result.tz("America/New_York").format()); // Output: "2023-08-09T10:00:00-04:00"
+```
+
+#### Date within Range
+
+```typescript
+const vdate = new V.VDate({
+    minDate: moment("2023-01-01"),
+    maxDate: moment("2023-12-31")
+});
+console.log(vdate.check("2023-08-09").format("YYYY-MM-DD")); // Output: "2023-08-09"
+```
