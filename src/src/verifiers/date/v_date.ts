@@ -56,7 +56,6 @@ function formatWithTimeZone(format: string) {
 
 function vDate(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VDateConditions): moment.Moment {
     let timeZone = getValue(conds?.timeZone) || "UTC"
-    console.log(timeZone)
     if (data === '' || !(typeof data === 'number' || typeof data === 'string' || data instanceof Date || moment.isMoment(data))) {
         throw new VerificationError([{
             key: "",
