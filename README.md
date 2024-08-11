@@ -1,4 +1,4 @@
-# structure-verifier 0.0.4
+# structure-verifier 0.0.5
 
 structure-verifier is a typescrpt library to validate data of "any" type and to ensure that it corresponds to a data type.
 
