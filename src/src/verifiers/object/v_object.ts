@@ -5,16 +5,25 @@ import { VAny } from "../any/v_any";
 import { VArray, VArrayNotNull } from "../array/v_array";
 import { Verifier } from "../verifier";
 
-interface VObjectConditions<T> extends VBadTypeMessage, VDefaultValue<T>, VVCIsRequired {
+interface VObjectConditions<T extends Record<string, Verifier<any>>> extends VBadTypeMessage, VDefaultValue<T>, VVCIsRequired {
     invalidPropertyMessage?: MessageType<void, void>;
     strictMode?: boolean;
     ignoreCase?: boolean;
     takeAllValues?: boolean;
     properties: T;
+    conds?: (val: { [K in keyof T]: ReturnType<T[K]['check']> } | null) => void;
 }
 
+interface VObjectConditionsNotNull<T extends Record<string, Verifier<any>>> extends VBadTypeMessage, VDefaultValue<T>, VVCIsRequired {
+    invalidPropertyMessage?: MessageType<void, void>;
+    strictMode?: boolean;
+    ignoreCase?: boolean;
+    takeAllValues?: boolean;
+    properties: T;
+    conds?: (val: { [K in keyof T]: ReturnType<T[K]['check']> }) => void;
+}
 
-function vObject<T extends Record<string, Verifier<any>>>(data: any, badTypeMessage: IMessageLanguage<void>, conds: VObjectConditions<T>): { [K in keyof T]: ReturnType<T[K]['check']> } {
+function vObject<T extends Record<string, Verifier<any>>>(data: any, badTypeMessage: IMessageLanguage<void>, conds: VObjectConditions<T> | VObjectConditionsNotNull<T>): { [K in keyof T]: ReturnType<T[K]['check']> } {
     if (typeof data !== 'object' || Array.isArray(data)) {
         throw new VerificationError([{
             key: "",
@@ -101,6 +110,9 @@ function vObject<T extends Record<string, Verifier<any>>>(data: any, badTypeMess
     if (errors.length > 0) {
         throw new VerificationError(errors)
     }
+    if (conds.conds) {
+        conds.conds(value);
+    }
     return value;
 }
 
@@ -108,7 +120,7 @@ export class VObjectNotNull<T extends Record<string, Verifier<any>>> extends Ver
     check(data: any): { [K in keyof T]: ReturnType<T[K]['check']> } {
         return vObject(this.isRequired(data, true), this.badTypeMessage, this.cond);
     }
-    constructor(protected cond: VObjectConditions<T>) {
+    constructor(protected cond: VObjectConditionsNotNull<T>) {
         super(cond);
         this.badTypeMessage = {
             es: () => `debe ser un objeto`,

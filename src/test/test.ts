@@ -1,8 +1,29 @@
-import moment from "moment-timezone";
 import { Verifiers as V } from "..";
+import { VerificationError } from "../src/error/v_error";
 
-const vdate = new V.VDate({
-    minDate: moment("2023-01-01"),
-    maxDate: moment("2023-12-31")
+const objectVal = new V.VObject({
+    properties: {
+        name: new V.VStringNotNull({ minLength: 3 }),
+        age: new V.VNumberNotNull({ min: 18, max: 99 }),
+    },
+    strictMode: true,
+    ignoreCase: true,
+    conds: (value) => {
+        if (value) {
+            if (value.age > 18 && value.name === 'John') {
+                throw new VerificationError([{
+                    key: "",
+                    message: "John no puede tener más de 18 años"
+                }])
+            }
+
+        }
+    }
 });
-console.log(vdate.check("2021-08-09")?.format("YYYY-MM-DD")); // Output: "2023-08-09"
+
+const data = {
+    name: 'John',
+    age: 20
+}
+
+objectVal.check(data);

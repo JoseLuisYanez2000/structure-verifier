@@ -19,7 +19,7 @@ const dMessages: VAnyDefaultMessages = {
 
 
 export class VAny extends Verifier<any | null> {
-    check(data: any): number | null {
+    check(data: any): any | null {
         return data;
     }
     constructor(protected cond?: VAnyConditions) {

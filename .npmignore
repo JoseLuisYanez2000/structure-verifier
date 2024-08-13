@@ -21,3 +21,5 @@ tsconfig.json
 /src
 /dist/index.test.js
 jest.config.js
+*.test.js
+*.test.ts
