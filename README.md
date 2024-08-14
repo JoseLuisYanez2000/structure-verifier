@@ -1,4 +1,4 @@
-# structure-verifier 0.0.6
+# structure-verifier 0.0.7
 
 structure-verifier is a typescrpt library to validate data of "any" type and to ensure that it corresponds to a data type.
 
@@ -286,4 +286,61 @@ const vdate = new V.VDate({
     maxDate: moment("2023-12-31")
 });
 console.log(vdate.check("2023-08-09").format("YYYY-MM-DD")); // Output: "2023-08-09"
+```
+
+***
+## VerificationError
+
+The `VerificationError` class extends the native JavaScript `Error` object to provide enhanced error handling for validation scenarios. This class is designed to collect and format multiple error messages, making it easier to understand and manage errors in your application.
+
+### Import
+
+To use the `VerificationError` class, import it as follows:
+
+```typescript
+import { VerificationError } from "./path/to/your/VerificationError";
+```
+
+### Constructor
+
+#### `constructor(messages: messageResp[])`
+
+The constructor takes an array of `messageResp` objects as an argument. Each `messageResp` object represents an individual validation error and has the following structure:
+
+```typescript
+interface messageResp {
+    key: string;
+    message: string;
+    parent?: string;
+}
+```
+
+The constructor will generate a formatted error message by concatenating each `messageResp` into a single string, separating them by a semicolon (`;`). Additionally, it stores the original errors in two formats:
+
+- **`_errors`**: An array of strings, where each string is a formatted error message.
+- **`_errorsObj`**: An array of `messageResp` objects.
+
+### Properties
+
+#### `errors: string[]`
+
+This getter returns the array of formatted error messages. Each message is generated based on the `parent`, `key`, and `message` properties of the `messageResp` objects.
+
+#### `errorsObj: messageResp[]`
+
+This getter returns the original array of `messageResp` objects, allowing access to the detailed structure of each validation error.
+
+### Usage Example
+
+```typescript
+import { VerificationError } from "../src/error/v_error";
+
+try {
+    throw new VerificationError([{ key: "email", message: "is invalid", parent: "contact" }]);
+} catch (err) {
+    if (err instanceof VerificationError) {
+        console.log(err.errors); // [ 'contact.email is invalid' ]
+        console.log(err.errorsObj); // Original messageResp objects
+    }
+}
 ```
