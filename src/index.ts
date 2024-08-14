@@ -8,6 +8,7 @@ import { VString, VStringNotNull } from "./src/verifiers/string/v_string";
 import { Verifier } from './src/verifiers/verifier';
 
 
+export { VerificationError } from "./src/error/v_error";
 
 export const Verifiers = {
     Verifier,
