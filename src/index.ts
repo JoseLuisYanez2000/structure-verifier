@@ -7,8 +7,10 @@ import { VObject, VObjectNotNull } from "./src/verifiers/object/v_object";
 import { VString, VStringNotNull } from "./src/verifiers/string/v_string";
 import { Verifier } from './src/verifiers/verifier';
 
-
 export { VerificationError } from "./src/error/v_error";
+
+export { InferType } from "./src/verifiers/type";
+
 
 export const Verifiers = {
     Verifier,
