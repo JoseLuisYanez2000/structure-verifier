@@ -1,6 +1,8 @@
 import { VerificationError } from "../../error/v_error";
 import { messageResp, VBadTypeMessage, VDefaultValue, VVCIsRequired } from "../../interfaces/types";
 import { getMessage, getValue, IMessageLanguage } from "../../languages/message";
+import { VAny } from "../any/v_any";
+import { VObject, VObjectNotNull } from "../object/v_object";
 import { Verifier } from "../verifier";
 
 export interface VArrayConditions<T extends Verifier<any>> extends VBadTypeMessage, VDefaultValue<ReturnType<T['check']>[]>, VVCIsRequired {
@@ -59,11 +61,19 @@ function vArray<T extends Verifier<any>>(data: any, badTypeMessage: IMessageLang
             value.push(conds.verifier.check(data[i]));
         } catch (error) {
             if (error instanceof VerificationError) {
-                errors.push(...error.errors.map(v => {
-                    return {
-                        key: i.toString(),
-                        message: v
-                    };
+                errors.push(...error.errorsObj.map(v => {
+                    let cond = conds.verifier
+
+                    if (cond instanceof VObject
+                        || cond instanceof VObjectNotNull
+                        || cond instanceof VArray
+                        || cond instanceof VArrayNotNull
+                        || cond instanceof VAny) {
+                        v.key = `[${i}]` + (v.key ? '.' + v.key : '');
+                    } else {
+                        v.key = `[${i}]`
+                    }
+                    return v;
                 }));
             }
         }

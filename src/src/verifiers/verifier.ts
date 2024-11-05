@@ -30,7 +30,8 @@ export abstract class Verifier<T> {
         if (isRequired && (data === null || data === undefined)) {
             throw new VerificationError([{
                 key: "",
-                message: `${getMessage(reqVal, undefined, mReq)} ${this.badTypeMessage[VerifierConfig.lang]()}`
+                message: `${getMessage(reqVal, undefined, mReq)} ${this.badTypeMessage[VerifierConfig.lang]()}`,
+                isEmpty: true
             }])
         }
         return data as T;

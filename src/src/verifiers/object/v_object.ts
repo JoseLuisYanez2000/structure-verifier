@@ -94,9 +94,19 @@ function vObject<T extends Record<string, Verifier<any>>>(data: any, badTypeMess
         } catch (error: any) {
             if (error instanceof VerificationError) {
                 errors.push(...error.errorsObj.map(v => {
-                    if (!v.key) v.key = keys.keyV
-                    if (conds.properties[keys.keyV] instanceof VObject || conds.properties[keys.keyV] instanceof VObjectNotNull || conds.properties[keys.keyV] instanceof VArray || conds.properties[keys.keyV] instanceof VArrayNotNull || conds.properties[keys.keyV] instanceof VAny)
-                        v.parent = keys.keyV + (v.parent ? '.' + v.parent : '')
+                    let cond = conds.properties[keys.keyV];
+
+
+                    if (cond instanceof VObject
+                        || cond instanceof VObjectNotNull
+                        || cond instanceof VArray
+                        || cond instanceof VArrayNotNull
+                        || cond instanceof VAny) {
+                        v.key = keys.keyV + (v.key ? '.' + v.key : '');
+                    } else {
+                        v.key = keys.keyV
+                    }
+
                     v.isEmpty = undefined
                     return v;
                 }))

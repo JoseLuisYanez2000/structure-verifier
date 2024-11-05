@@ -1,4 +1,4 @@
-export type messageResp = { key: string, message: string, parent?: string, isEmpty?: boolean }
+export type messageResp = { key?: string, message: string, isEmpty?: boolean, isItem?: boolean };
 
 export type MessageType<T, K> = T | { val: T, message: (values: K) => string };
 
@@ -19,9 +19,9 @@ export interface VDefaultValue<T> {
     defaultValue?: T
 }
 
-export interface IInfo<T>{
-    info?:{
-        description?:string,
-        examples?:T[]
+export interface IInfo<T> {
+    info?: {
+        description?: string,
+        examples?: T[]
     }
 }
