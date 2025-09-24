@@ -12,6 +12,11 @@ export abstract class Verifier<T> {
             es: () => "es requerido y",
             en: () => "is required and"
         }
+        if (typeof data === 'string' && this.cond?.emptyAsNull === true) {
+            if (data.length === 0) {
+                data = null;
+            }
+        }
         let reqVal: MessageType<boolean, void> = false;
         if (this.cond?.isRequired !== undefined) {
             reqVal = this.cond.isRequired;

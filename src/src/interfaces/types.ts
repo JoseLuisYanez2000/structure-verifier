@@ -4,6 +4,7 @@ export type MessageType<T, K> = T | { val: T, message: (values: K) => string };
 
 export interface VVCIsRequired {
     isRequired?: MessageType<boolean, void>;
+    emptyAsNull?: boolean;
 }
 
 export interface VVCIsRequiredMessage {

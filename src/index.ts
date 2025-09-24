@@ -5,6 +5,7 @@ import { VDate, VDateNotNull } from "./src/verifiers/date/v_date";
 import { VNumber, VNumberNotNull } from "./src/verifiers/number/v_number";
 import { VObject, VObjectNotNull } from "./src/verifiers/object/v_object";
 import { VString, VStringNotNull } from "./src/verifiers/string/v_string";
+import { VUUID, VUUIDNotNull } from "./src/verifiers/uuid/v_uuid";
 import { Verifier } from './src/verifiers/verifier';
 
 export { VerificationError } from "./src/error/v_error";
@@ -19,6 +20,7 @@ export { VObjectNotNull, VObject } from "./src/verifiers/object/v_object";
 export { VArrayNotNull, VArray } from "./src/verifiers/array/v_array";
 export { VAny } from "./src/verifiers/any/v_any";
 export { VDateNotNull, VDate } from "./src/verifiers/date/v_date";
+export { VUUIDNotNull, VUUID } from "./src/verifiers/uuid/v_uuid";
 
 
 export const Verifiers = {
@@ -35,5 +37,7 @@ export const Verifiers = {
     ArrayNotNull: VArrayNotNull,
     Any: VAny,
     Date: VDate,
-    DateNotNull: VDateNotNull
+    DateNotNull: VDateNotNull,
+    UUIDNotNull: VUUIDNotNull,
+    UUID: VUUID
 }

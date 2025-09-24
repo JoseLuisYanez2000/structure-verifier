@@ -1,6 +1,6 @@
-# structure-verifier 0.0.7
+# structure-verifier 0.0.9
 
-structure-verifier is a typescrpt library to validate data of "any" type and to ensure that it corresponds to a data type.
+structure-verifier is a typescript library to validate data of "any" type and to ensure that it corresponds to a data type.
 
 ## Installation
 
@@ -11,9 +11,9 @@ structure-verifier is a typescrpt library to validate data of "any" type and to 
 ## Example use
 
 ```typescript
-import { Verifiers as V,VerificationError } from "structure-verifier";
+import { Verifiers as V, VerificationError } from "structure-verifier";
 //////////Verificator object creation
-const v = new V.VNumber();
+const v = new V.Number();
 /////////Running validations
 
 try {
@@ -30,13 +30,38 @@ try {
     console.log(error as VerificationError);
 }
 ```
+
+### Alternative Import with Verifiers Object
+
+You can also import the `Verifiers` object which contains all available validators:
+
+```typescript
+import { Verifiers, VerificationError } from "structure-verifier";
+
+// Available verifiers:
+const numberVal = new Verifiers.Number();           // VNumber
+const numberNotNullVal = new Verifiers.NumberNotNull(); // VNumberNotNull
+const stringVal = new Verifiers.String();           // VString
+const stringNotNullVal = new Verifiers.StringNotNull(); // VStringNotNull
+const booleanVal = new Verifiers.Boolean();         // VBoolean
+const booleanNotNullVal = new Verifiers.BooleanNotNull(); // VBooleanNotNull
+const objectVal = new Verifiers.Object({ properties: {} }); // VObject
+const objectNotNullVal = new Verifiers.ObjectNotNull({ properties: {} }); // VObjectNotNull
+const arrayVal = new Verifiers.Array({ verifier: new Verifiers.Number() }); // VArray
+const arrayNotNullVal = new Verifiers.ArrayNotNull({ verifier: new Verifiers.Number() }); // VArrayNotNull
+const anyVal = new Verifiers.Any();                 // VAny
+const dateVal = new Verifiers.Date();               // VDate
+const dateNotNullVal = new Verifiers.DateNotNull(); // VDateNotNull
+const uuidVal = new Verifiers.UUID();               // VUUID
+const uuidNotNullVal = new Verifiers.UUIDNotNull(); // VUUIDNotNull
+```
 ## Types
 In case it is necessary to infer the type of the response, it is achieved by using InferType
 
 ```typescript
-    import { InferType } from "structure-verifier";
+    import { InferType, Verifiers as V } from "structure-verifier";
     
-    const val = new V.VNumber();
+    const val = new V.Number();
     type valType = InferType<typeof val>;
 
     function action(data:valType){
@@ -48,8 +73,8 @@ In case it is necessary to infer the type of the response, it is achieved by usi
 ### Numbers
 Validations to numerical data
 ```typescript
-    const numberVal = new V.VNumber();////return number|null
-    const notNullNumberVal = new V.VNumberNotNull() ////return number
+    const numberVal = new V.Number();////return number|null
+    const notNullNumberVal = new V.NumberNotNull() ////return number
 ```
 Number exclusive conditions
 
@@ -62,7 +87,7 @@ Number exclusive conditions
 
 #### Example
 ```typescript
-    const numberVal = new V.VNumber({
+    const numberVal = new V.Number({
         min:10,
         max:20,
         in: [15,16,17],
@@ -77,8 +102,8 @@ Number exclusive conditions
 Validations for string data.
 
 ```typescript
-    const stringVal = new V.VString(); // Returns string | null
-    const notNullStringVal = new V.VStringNotNull(); // Returns string
+    const stringVal = new V.String(); // Returns string | null
+    const notNullStringVal = new V.StringNotNull(); // Returns string
 ```
 String Exclusive Conditions
 - **minLength:** - Specifies the minimum length the string must have.
@@ -92,7 +117,7 @@ String Exclusive Conditions
 
 #### Example
 ```typescript
-    const stringVal = new V.VString({
+    const stringVal = new V.String({
         minLength: 5,
         maxLength: 10,
         regex: /^[a-zA-Z]+$/,
@@ -109,8 +134,8 @@ String Exclusive Conditions
 Validations for boolean data.
 
 ```typescript
-const booleanVal = new V.VBoolean(); // Returns boolean | null
-const notNullBooleanVal = new V.VBooleanNotNull(); // Returns boolean
+const booleanVal = new V.Boolean(); // Returns boolean | null
+const notNullBooleanVal = new V.BooleanNotNull(); // Returns boolean
 ```
 
 Boolean Exclusive Conditions
@@ -119,8 +144,8 @@ Boolean Exclusive Conditions
 
 #### Example
 ```typescript
-const booleanVal = new V.VBoolean();
-const notNullBooleanVal = new V.VBooleanNotNull();
+const booleanVal = new V.Boolean();
+const notNullBooleanVal = new V.BooleanNotNull();
 
 try {
     console.log(booleanVal.check('true'));  // Output: true
@@ -137,8 +162,8 @@ try {
 Validations for object data.
 
 ```typescript
-const objectVal = new V.VObject({ properties: {  name: new V.VString({ minLength: 3 })/* properties with validations */ } }); // Returns object {name:""} | null
-const notNullObjectVal = new V.VObjectNotNull({ properties: {  name: new V.VString({ minLength: 3 })/* properties with validations */ } }); // Returns object {name:""}
+const objectVal = new V.Object({ properties: {  name: new V.String({ minLength: 3 })/* properties with validations */ } }); // Returns object {name:""} | null
+const notNullObjectVal = new V.ObjectNotNull({ properties: {  name: new V.String({ minLength: 3 })/* properties with validations */ } }); // Returns object {name:""}
 ```
 
 Object Exclusive Conditions
@@ -150,10 +175,10 @@ Object Exclusive Conditions
 
 #### Example
 ```typescript
-const objectVal = new V.VObject({
+const objectVal = new V.Object({
     properties: {
-        name: new V.VString({ minLength: 3 }),
-        age: new V.VNumber({ min: 18, max: 99 }),
+        name: new V.String({ minLength: 3 }),
+        age: new V.Number({ min: 18, max: 99 }),
     },
     strictMode: true,
     ignoreCase: true,
@@ -163,10 +188,10 @@ const objectVal = new V.VObject({
     }
 });
 
-const notNullObjectVal = new V.VObjectNotNull({
+const notNullObjectVal = new V.ObjectNotNull({
     properties: {
-        name: new V.VStringNotNull({ minLength: 3 }),
-        age: new V.VNumberNotNull({ min: 18, max: 99 }),
+        name: new V.StringNotNull({ minLength: 3 }),
+        age: new V.NumberNotNull({ min: 18, max: 99 }),
     },
     strictMode: true,
     ignoreCase: true,
@@ -189,8 +214,8 @@ try {
 Validations for array data.
 
 ```typescript
-const arrayVal = new V.VArray({verifier:new V.VNumber()}); // Returns Array | null
-const notNullArrayVal = new V.VArrayNotNull({verifier:new V.VNumber()}); // Returns Array
+const arrayVal = new V.Array({verifier: new V.Number()}); // Returns Array | null
+const notNullArrayVal = new V.ArrayNotNull({verifier: new V.Number()}); // Returns Array
 ```
 
 Array Exclusive Conditions
@@ -200,8 +225,8 @@ Array Exclusive Conditions
 
 #### Example
 ```typescript
-const arrayVal = new V.VArray(new V.VNumber(), { minLength: 1, maxLength: 5 });
-const notNullArrayVal = new V.VArrayNotNull(new V.VNumber(), { minLength: 2 });
+const arrayVal = new V.Array({ verifier: new V.Number(), minLength: 1, maxLength: 5 });
+const notNullArrayVal = new V.ArrayNotNull({ verifier: new V.Number(), minLength: 2 });
 
 try {
     console.log(arrayVal.check([1, 2, 3]));  // Output: [1, 2, 3]
@@ -218,7 +243,7 @@ try {
 Validations for any data.
 
 ```typescript
-const anyVal = new V.VAny(); // Returns any type
+const anyVal = new V.Any(); // Returns any type
 ```
 
 VAny Exclusive Conditions
@@ -227,14 +252,14 @@ VAny Exclusive Conditions
 
 #### Example
 ```typescript
-const anyVal = new V.VAny();
+const anyVal = new V.Any();
 
 try {
-    console.log(anyVal.check('true'));  // Output: true
-    console.log(anyVal.check('FALSE')); // Output: false
+    console.log(anyVal.check('true'));  // Output: 'true'
+    console.log(anyVal.check('FALSE')); // Output: 'FALSE'
     console.log(anyVal.check(null));    // Output: null
-    console.log(anyVal.check('1'));   // Output: true
-    console.log(anyVal.check(0));     // Output: false
+    console.log(anyVal.check('1'));     // Output: '1'
+    console.log(anyVal.check(0));       // Output: 0
 } catch (error) {
     console.error(error);
 }
@@ -244,8 +269,8 @@ try {
 Validations for date data (depends Moment).
 
 ```typescript
-    const vdate = new V.VDate();
-    const vdateNotNull = new V.VDateNotNull();
+    const vdate = new V.Date();
+    const vdateNotNull = new V.DateNotNull();
 ```
 
 VDate Exclusive Conditions
@@ -259,21 +284,21 @@ VDate Exclusive Conditions
 #### Basic Date Validation
 
 ```typescript
-const vdate = new V.VDate();
+const vdate = new V.Date();
 console.log(vdate.check("2023-08-09")?.format("YYYY-MM-DD")); // Output: "2023-08-09"
 ```
 
 #### Date with Specific Format
 
 ```typescript
-const vdate = new V.VDate({ format: "DD/MM/YYYY" });
+const vdate = new V.Date({ format: "DD/MM/YYYY" });
 console.log(vdate.check("09/08/2023")?.format("DD/MM/YYYY")); // Output: "09/08/2023"
 ```
 
 #### Date with Time Zone
 
 ```typescript
-const vdate = new V.VDate({ timeZone: "America/New_York" });
+const vdate = new V.Date({ timeZone: "America/New_York" });
 const result = vdate.check("2023-08-09T10:00:00");
 console.log(result.tz("America/New_York").format()); // Output: "2023-08-09T10:00:00-04:00"
 ```
@@ -281,11 +306,62 @@ console.log(result.tz("America/New_York").format()); // Output: "2023-08-09T10:0
 #### Date within Range
 
 ```typescript
-const vdate = new V.VDate({
+const vdate = new VDate({
     minDate: moment("2023-01-01"),
     maxDate: moment("2023-12-31")
 });
 console.log(vdate.check("2023-08-09").format("YYYY-MM-DD")); // Output: "2023-08-09"
+```
+
+***
+### UUID 
+Validations for UUID (Universally Unique Identifier) data.
+
+```typescript
+const uuidVal = new V.UUID(); // Returns string | null
+const notNullUuidVal = new V.UUIDNotNull(); // Returns string
+```
+
+UUID Exclusive Conditions
+
+- **version**: Specifies the UUID version to validate against (1, 2, 3, 4, or 5). If not specified, accepts any version.
+- **allowNoHyphens**: When `true`, allows UUIDs without hyphens. Default is `false`.
+- **strictMode**: When `true`, ensures the input value is strictly a string (not coerced from another type).
+
+#### Example
+
+#### Basic UUID Validation
+
+```typescript
+const uuidVal = new V.UUID();
+console.log(uuidVal.check("550e8400-e29b-41d4-a716-446655440000")); // Output: "550e8400-e29b-41d4-a716-446655440000"
+console.log(uuidVal.check(null)); // Output: null
+```
+
+#### UUID with Specific Version
+
+```typescript
+const uuidV4Val = new V.UUID({ version: 4 });
+console.log(uuidV4Val.check("550e8400-e29b-41d4-a716-446655440000")); // Output: "550e8400-e29b-41d4-a716-446655440000"
+```
+
+#### UUID without Hyphens
+
+```typescript
+const uuidNoHyphensVal = new V.UUID({ allowNoHyphens: true });
+console.log(uuidNoHyphensVal.check("550e8400e29b41d4a716446655440000")); // Output: "550e8400-e29b-41d4-a716-446655440000"
+```
+
+#### Strict Mode UUID
+
+```typescript
+const strictUuidVal = new V.UUIDNotNull({ strictMode: true });
+try {
+    console.log(strictUuidVal.check("550e8400-e29b-41d4-a716-446655440000")); // Output: "550e8400-e29b-41d4-a716-446655440000"
+    console.log(strictUuidVal.check(123)); // Throws VerificationError
+} catch (error) {
+    console.error(error);
+}
 ```
 
 ***
