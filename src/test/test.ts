@@ -1,25 +1,23 @@
 import { VerificationError } from "../src/error/v_error";
 import { Verifiers as V } from "../index";
 try {
-    const VVal = new V.VObjectNotNull({
+    const VVal = new V.ObjectNotNull({
         properties: {
-            body: new V.VArrayNotNull({
-                verifier: new V.VObjectNotNull({
+            body: new V.ArrayNotNull({
+                verifier: new V.ObjectNotNull({
                     properties: {
-                        nombre: new V.VStringNotNull({}),
-                        edad: new V.VNumberNotNull({}),
-                        contactos: new V.VArrayNotNull({
+                        nombre: new V.StringNotNull({}),
+                        edad: new V.NumberNotNull({}),
+                        contactos: new V.ArrayNotNull({
 
-                            verifier: new V.VObjectNotNull({
+                            verifier: new V.ObjectNotNull({
                                 properties: {
-                                    email: new V.VStringNotNull({}),
-                                    telefono: new V.VStringNotNull({})
+                                    email: new V.StringNotNull({}),
+                                    telefono: new V.StringNotNull({})
                                 }
                             })
-
-
                         })
-                    }
+                    },
                 }),
             })
         }
@@ -33,7 +31,11 @@ try {
                 contactos: [{
                     verifier: {
                         email: "",
-
+                    }
+                },
+                {
+                    verifier: {
+                        email: "",
                     }
                 }]
 
