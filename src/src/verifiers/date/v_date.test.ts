@@ -1,6 +1,6 @@
-import moment from "moment-timezone";
 import { VerificationError } from "../../error/v_error";
 import { Verifiers as V } from "../../../index";
+import { datetime } from "../../utils/datetime";
 
 describe("VDate", () => {
     it("should validate a date string with default settings", () => {
@@ -26,19 +26,19 @@ describe("VDate", () => {
 
     it("should validate a date within a min and max range", () => {
         const vdate = new V.Date({
-            minDate: moment("2023-01-01"),
-            maxDate: moment("2023-12-31")
+            minDate: datetime("2023-01-01"),
+            maxDate: datetime("2023-12-31")
         });
         expect(vdate.check("2023-08-09")?.format("YYYY-MM-DD")).toEqual("2023-08-09");
     });
 
     it("should throw an error if date is before minDate", () => {
-        const vdate = new V.Date({ minDate: moment("2023-01-01") });
+        const vdate = new V.Date({ minDate: datetime("2023-01-01") });
         expect(() => vdate.check("2022-12-31")).toThrow(VerificationError);
     });
 
     it("should throw an error if date is after maxDate", () => {
-        const vdate = new V.Date({ maxDate: moment("2023-12-31") });
+        const vdate = new V.Date({ maxDate: datetime("2023-12-31") });
         expect(() => vdate.check("2024-01-01")).toThrow(VerificationError);
     });
 

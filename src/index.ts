@@ -21,6 +21,7 @@ export { VArrayNotNull, VArray } from "./src/verifiers/array/v_array";
 export { VAny } from "./src/verifiers/any/v_any";
 export { VDateNotNull, VDate } from "./src/verifiers/date/v_date";
 export { VUUIDNotNull, VUUID } from "./src/verifiers/uuid/v_uuid";
+export { datetime } from "./src/utils/datetime";
 
 
 export const Verifiers = {

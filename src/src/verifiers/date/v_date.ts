@@ -1,23 +1,24 @@
-import moment, { Moment } from "moment-timezone";
+
 import { IInfo, MessageType, VBadTypeMessage, VDefaultValue, VVCIsRequired } from "../../interfaces/types";
 import { getMessage, getValue, IMessageLanguage } from "../../languages/message";
 import { VerificationError } from "../../error/v_error";
 import { Verifier } from "../verifier";
-moment.suppressDeprecationWarnings = true;
+import { datetime } from "../../utils/datetime";
 
-interface VDateConditions extends VBadTypeMessage, VDefaultValue<Moment>, VVCIsRequired, IInfo<number | string | Date | moment.Moment> {
+
+interface VDateConditions extends VBadTypeMessage, VDefaultValue<datetime.Dayjs>, VVCIsRequired, IInfo<number | string | Date | datetime.Dayjs> {
     format?: MessageType<string, { format: string }>;
     timeZone?: MessageType<string, { timeZone: string }>;
-    maxDate?: MessageType<moment.Moment, { maxDate: moment.Moment }>;
-    minDate?: MessageType<moment.Moment, { minDate: moment.Moment }>;
-    default?: MessageType<moment.Moment, { default: moment.Moment }>;
+    maxDate?: MessageType<datetime.Dayjs, { maxDate: datetime.Dayjs }>;
+    minDate?: MessageType<datetime.Dayjs, { minDate: datetime.Dayjs }>;
+    default?: MessageType<datetime.Dayjs, { default: datetime.Dayjs }>;
 }
 
 interface VDateDefaultMessages {
     format: IMessageLanguage<{ format: string }>;
     timeZone: IMessageLanguage<{ timeZone: string }>;
-    maxDate: IMessageLanguage<{ maxDate: moment.Moment }>;
-    minDate: IMessageLanguage<{ minDate: moment.Moment }>;
+    maxDate: IMessageLanguage<{ maxDate: datetime.Dayjs }>;
+    minDate: IMessageLanguage<{ minDate: datetime.Dayjs }>;
     badTypeMessage: IMessageLanguage<void>
 }
 
@@ -31,12 +32,12 @@ const dMessages: VDateDefaultMessages = {
         en: (values: { timeZone: string }) => `must have the time zone ${values.timeZone}`
     },
     maxDate: {
-        es: (values: { maxDate: moment.Moment }) => `debe ser menor o igual a ${values.maxDate.format()}`,
-        en: (values: { maxDate: moment.Moment }) => `must be less or equal to ${values.maxDate.format()}`
+        es: (values: { maxDate: datetime.Dayjs }) => `debe ser menor o igual a ${values.maxDate.format()}`,
+        en: (values: { maxDate: datetime.Dayjs }) => `must be less or equal to ${values.maxDate.format()}`
     },
     minDate: {
-        es: (values: { minDate: moment.Moment }) => `debe ser mayor o igual a ${values.minDate.format()}`,
-        en: (values: { minDate: moment.Moment }) => `must be greater or equal to ${values.minDate.format()}`
+        es: (values: { minDate: datetime.Dayjs }) => `debe ser mayor o igual a ${values.minDate.format()}`,
+        en: (values: { minDate: datetime.Dayjs }) => `must be greater or equal to ${values.minDate.format()}`
     },
     badTypeMessage: {
         es: () => `debe ser una fecha`,
@@ -54,20 +55,20 @@ function formatWithTimeZone(format: string) {
     return /Z{1,2}|z{1,2}/.test(format)
 }
 
-function vDate(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VDateConditions): moment.Moment {
+function vDate(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VDateConditions): datetime.Dayjs {
     let timeZone = getValue(conds?.timeZone) || "UTC"
-    if (data === '' || !(typeof data === 'number' || typeof data === 'string' || data instanceof Date || moment.isMoment(data))) {
+    if (data === '' || !(typeof data === 'number' || typeof data === 'string' || data instanceof Date || datetime.isDayjs(data))) {
         throw new VerificationError([{
             key: "",
             message: getMessage(conds?.badTypeMessage != undefined ? conds?.badTypeMessage : undefined, undefined, badTypeMessage)
         }]);
     }
 
-    let date: moment.Moment = moment();
+    let date: datetime.Dayjs = datetime();
 
     if (conds?.format) {
         let format = getValue(conds.format);
-        date = moment(data, format, true);
+        date = datetime(data, format, true);
         if (!date.isValid()) {
             throw new VerificationError([{
                 key: "",
@@ -75,12 +76,12 @@ function vDate(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VDateC
             }]);
         }
         if (!formatWithTimeZone(format)) {
-            date = moment.tz(date.format('YYYY-MM-DD HH:mm:ss'), timeZone)
+            date = datetime.tz(date.format('YYYY-MM-DD HH:mm:ss'), timeZone)
         }
     } else {
-        date = moment(data);
+        date = datetime(data);
         if (typeof data === 'string' && !haveTimezone(data)) {
-            date = moment.tz(date.format('YYYY-MM-DD HH:mm:ss'), timeZone)
+            date = datetime.tz(date.format('YYYY-MM-DD HH:mm:ss'), timeZone)
         }
 
     }
@@ -110,8 +111,8 @@ function vDate(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VDateC
 }
 
 
-export class VDateNotNull extends Verifier<moment.Moment> {
-    check(data: any): moment.Moment {
+export class VDateNotNull extends Verifier<datetime.Dayjs> {
+    check(data: any): datetime.Dayjs {
         return vDate(this.isRequired(data, true), this.badTypeMessage, this.cond);
     }
     constructor(protected cond?: VDateConditions) {
@@ -120,8 +121,8 @@ export class VDateNotNull extends Verifier<moment.Moment> {
     }
 }
 
-export class VDate extends Verifier<moment.Moment | null> {
-    check(data: any): moment.Moment | null {
+export class VDate extends Verifier<datetime.Dayjs | null> {
+    check(data: any): datetime.Dayjs | null {
         let val = this.isRequired(data);
         if (val === null || val === undefined) {
             return null;
