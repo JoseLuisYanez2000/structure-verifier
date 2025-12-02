@@ -1,6 +1,6 @@
 import { Verifier } from "../verifier";
 import { VerificationError } from "../../error/v_error";
-import { getMessage, IMessageLanguage } from '../../languages/message';
+import { getMessage, getValue, IMessageLanguage } from '../../languages/message';
 import { VBadTypeMessage, VDefaultValue, VVCIsRequired, MessageType } from "../../interfaces/types";
 
 interface VUUIDConditions extends VBadTypeMessage, VDefaultValue<string>, VVCIsRequired {
@@ -10,7 +10,7 @@ interface VUUIDConditions extends VBadTypeMessage, VDefaultValue<string>, VVCIsR
 }
 
 function vUUID(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VUUIDConditions): string {
-    if (typeof data !== 'string' && conds?.strictMode) {
+    if (getValue(conds?.strictMode) === true && typeof data !== 'string') {
         throw new VerificationError([{
             key: "",
             message: getMessage(conds?.badTypeMessage, undefined, badTypeMessage)

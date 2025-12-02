@@ -16,7 +16,7 @@ interface VStringConditions extends VBadTypeMessage, VDefaultValue<string>, VVCI
 
 
 function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStringConditions): string {
-    if (typeof data !== 'string' && conds?.strictMode === true) {
+    if (getValue(conds?.strictMode) === true && typeof data !== 'string') {
         throw new VerificationError([{
             key: "",
             message: getMessage(conds?.badTypeMessage != undefined ? conds?.badTypeMessage : undefined, undefined, badTypeMessage)
@@ -68,7 +68,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
         }
     }
     if (conds?.in !== undefined) {
-        if (conds?.ignoreCase === true) {
+        if (getValue(conds?.ignoreCase) === true) {
             if (!getValue(conds?.in).map(x => x.toLowerCase()).includes(data.toLowerCase())) {
                 throw new VerificationError([{
                     key: "",
@@ -91,7 +91,7 @@ function vString(data: any, badTypeMessage: IMessageLanguage<void>, conds?: VStr
         }
     }
     if (conds?.notIn !== undefined) {
-        if (conds?.ignoreCase === true) {
+        if (getValue(conds?.ignoreCase) === true) {
             if (getValue(conds?.notIn).map(x => x.toLowerCase()).includes(data.toLowerCase())) {
                 throw new VerificationError([{
                     key: "",
