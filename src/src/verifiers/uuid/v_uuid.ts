@@ -19,77 +19,106 @@ export interface VUUIDConditions
   strictMode?: MessageType<boolean, void>;
 }
 
-function vUUID(
+const UUID_MESSAGES = {
+  missingHyphens: {
+    es: () => `UUID debe incluir guiones`,
+    en: () => `UUID must include hyphens`,
+  },
+  invalidLength: {
+    es: () => `UUID inválido, longitud incorrecta`,
+    en: () => `Invalid UUID, wrong length`,
+  },
+};
+
+function throwUUIDError(
+  condition: MessageType<void, void> | string | undefined,
+  badTypeMessage: IMessageLanguage<void>,
+) {
+  throw new VerificationError([
+    {
+      key: "",
+      message: getMessage(condition, undefined, badTypeMessage),
+    },
+  ]);
+}
+
+function ensureUUIDType(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
   conds?: VUUIDConditions,
-): string {
+) {
   if (getValue(conds?.strictMode) === true && typeof data !== "string") {
-    throw new VerificationError([
-      {
-        key: "",
-        message: getMessage(conds?.badTypeMessage, undefined, badTypeMessage),
-      },
-    ]);
+    throwUUIDError(conds?.badTypeMessage, badTypeMessage);
   }
+}
 
-  let uuid = String(data);
-
+function ensureUUIDHyphenPolicy(uuid: string, conds?: VUUIDConditions) {
   const hasHyphens = uuid.includes("-");
-
   if (!conds?.allowNoHyphens && !hasHyphens) {
-    throw new VerificationError([
-      {
-        key: "",
-        message: getMessage(undefined, undefined, {
-          es: () => `UUID debe incluir guiones`,
-          en: () => `UUID must include hyphens`,
-        }),
-      },
-    ]);
+    throwUUIDError(undefined, UUID_MESSAGES.missingHyphens);
   }
+}
 
-  const normalized = uuid.replace(/-/g, "");
+function normalizeUUID(uuid: string) {
+  return uuid.replace(/-/g, "");
+}
 
-  if (normalized.length !== 32) {
-    throw new VerificationError([
-      {
-        key: "",
-        message: getMessage(undefined, undefined, {
-          es: () => `UUID inválido, longitud incorrecta`,
-          en: () => `Invalid UUID, wrong length`,
-        }),
-      },
-    ]);
+function ensureUUIDLength(normalizedUuid: string) {
+  if (normalizedUuid.length !== 32) {
+    throwUUIDError(undefined, UUID_MESSAGES.invalidLength);
   }
+}
 
-  const versionPattern = conds?.version ?? "[1-5]";
-  const regex = new RegExp(
+function buildUUIDRegex(version?: VUUIDConditions["version"]) {
+  const versionPattern = version ?? "[1-5]";
+  return new RegExp(
     `^[0-9a-f]{8}[0-9a-f]{4}${versionPattern}[0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$`,
     "i",
   );
-  if (!regex.test(normalized)) {
+}
+
+function ensureUUIDVersion(normalizedUuid: string, conds?: VUUIDConditions) {
+  const regex = buildUUIDRegex(conds?.version);
+  if (!regex.test(normalizedUuid)) {
     throw new VerificationError([
       {
         key: "",
         message: getMessage(undefined, undefined, {
-          es: (values?: any) =>
+          es: () =>
             `UUID inválido${conds?.version ? ` para versión ${conds.version}` : ""}`,
-          en: (values?: any) =>
+          en: () =>
             `Invalid UUID${conds?.version ? ` for version ${conds.version}` : ""}`,
         }),
       },
     ]);
   }
-  const formatted = [
-    normalized.slice(0, 8),
-    normalized.slice(8, 12),
-    normalized.slice(12, 16),
-    normalized.slice(16, 20),
-    normalized.slice(20, 32),
-  ].join("-");
+}
 
-  return formatted.toLowerCase();
+function formatUUID(normalizedUuid: string) {
+  return [
+    normalizedUuid.slice(0, 8),
+    normalizedUuid.slice(8, 12),
+    normalizedUuid.slice(12, 16),
+    normalizedUuid.slice(16, 20),
+    normalizedUuid.slice(20, 32),
+  ].join("-");
+}
+
+function vUUID(
+  data: any,
+  badTypeMessage: IMessageLanguage<void>,
+  conds?: VUUIDConditions,
+): string {
+  ensureUUIDType(data, badTypeMessage, conds);
+
+  const uuid = String(data);
+  ensureUUIDHyphenPolicy(uuid, conds);
+
+  const normalizedUuid = normalizeUUID(uuid);
+  ensureUUIDLength(normalizedUuid);
+  ensureUUIDVersion(normalizedUuid, conds);
+
+  return formatUUID(normalizedUuid).toLowerCase();
 }
 
 export class VUUIDNotNull extends Verifier<string> {

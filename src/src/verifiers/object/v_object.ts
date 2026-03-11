@@ -33,12 +33,43 @@ export interface VObjectConditionsNotNull<
   conds?: (val: { [K in keyof T]: ReturnType<T[K]["check"]> }) => void;
 }
 
+const UNSAFE_OBJECT_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function setObjectValue(target: Record<string, any>, key: string, value: any) {
+  if (UNSAFE_OBJECT_KEYS.has(key)) {
+    Object.defineProperty(target, key, {
+      value,
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+    return;
+  }
+
+  target[key] = value;
+}
+
+function getObjectValue(source: Record<string, any>, key: string) {
+  const descriptor = Object.getOwnPropertyDescriptor(source, key);
+  return descriptor ? descriptor.value : source[key];
+}
+
+function isNestedVerifier(verifier: Verifier<any>) {
+  return (
+    verifier instanceof VObject ||
+    verifier instanceof VObjectNotNull ||
+    verifier instanceof VArray ||
+    verifier instanceof VArrayNotNull ||
+    verifier instanceof VAny
+  );
+}
+
 function vObject<T extends Record<string, Verifier<any>>>(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
   conds: VObjectConditions<T> | VObjectConditionsNotNull<T>,
 ): { [K in keyof T]: ReturnType<T[K]["check"]> } {
-  if (typeof data !== "object" || Array.isArray(data)) {
+  if (data === null || typeof data !== "object" || Array.isArray(data)) {
     throw new VerificationError([
       {
         key: "",
@@ -53,16 +84,19 @@ function vObject<T extends Record<string, Verifier<any>>>(
     ]);
   }
 
-  let keysData = Object.keys(data);
-  let keysValidations = Object.keys(conds.properties);
+  const keysData = Object.keys(data);
+  const keysValidations = Object.keys(conds.properties);
   if (conds.strictMode) {
     let dif: string[] = [];
     if (conds.ignoreCase) {
-      let temp = keysValidations.map((v) => v.toUpperCase());
+      const temp = keysValidations.map((v) => v.toUpperCase());
       dif = keysData.filter((v) => !temp.includes(v.toUpperCase()));
-    } else dif = keysData.filter((v) => !keysValidations.includes(v));
+    } else {
+      dif = keysData.filter((v) => !keysValidations.includes(v));
+    }
+
     if (dif.length > 0) {
-      let error = new VerificationError(
+      const error = new VerificationError(
         dif.map((v) => {
           return {
             key: v,
@@ -76,56 +110,56 @@ function vObject<T extends Record<string, Verifier<any>>>(
       if (error.errors.length > 0) throw error;
     }
   }
-  let errors: messageResp[] = [];
-  let value: any = {};
-  let m: { keyV: string; keyD: string }[] = [];
+
+  const errors: messageResp[] = [];
+  const value: Record<string, any> = {};
+  const keyMap: { keyV: string; keyD: string }[] = [];
+
   for (const key in conds.properties) {
     if (conds.ignoreCase) {
-      let ketTemp = keysData.find(
+      const dataKey = keysData.find(
         (v) => v.toLocaleUpperCase() == key.toUpperCase(),
       );
-      if (ketTemp) {
-        m.push({
+      if (dataKey) {
+        keyMap.push({
           keyV: key,
-          keyD: ketTemp,
+          keyD: dataKey,
         });
       } else {
-        m.push({
+        keyMap.push({
           keyV: key,
           keyD: key,
         });
       }
     } else {
-      m.push({
+      keyMap.push({
         keyV: key,
         keyD: key,
       });
     }
   }
+
   if (conds.takeAllValues) {
-    for (let k of keysData) {
-      if (!m.find((v) => v.keyD == k)) {
-        value[k] = data[k];
+    for (const dataKey of keysData) {
+      if (!keyMap.find((v) => v.keyD == dataKey)) {
+        setObjectValue(value, dataKey, getObjectValue(data, dataKey));
       }
     }
   }
-  for (let keys of m) {
+
+  for (const keys of keyMap) {
     try {
-      const result = conds.properties[keys.keyV].check(data[keys.keyD]);
-      value[keys.keyV] = result;
+      const result = conds.properties[keys.keyV].check(
+        getObjectValue(data, keys.keyD),
+      );
+      setObjectValue(value, keys.keyV, result);
     } catch (error: any) {
       if (error instanceof VerificationError) {
         errors.push(
           ...error.errorsObj.map((v) => {
-            let cond = conds.properties[keys.keyV];
+            const cond = conds.properties[keys.keyV];
 
-            if (
-              cond instanceof VObject ||
-              cond instanceof VObjectNotNull ||
-              cond instanceof VArray ||
-              cond instanceof VArrayNotNull ||
-              cond instanceof VAny
-            ) {
+            if (isNestedVerifier(cond)) {
               v.key = keys.keyV + (v.key ? "." + v.key : "");
             } else {
               v.key = keys.keyV;
@@ -143,10 +177,11 @@ function vObject<T extends Record<string, Verifier<any>>>(
   if (errors.length > 0) {
     throw new VerificationError(errors);
   }
+  const typedValue = value as { [K in keyof T]: ReturnType<T[K]["check"]> };
   if (conds.conds) {
-    conds.conds(value);
+    conds.conds(typedValue);
   }
-  return value;
+  return typedValue;
 }
 
 export class VObjectNotNull<
@@ -159,7 +194,7 @@ export class VObjectNotNull<
     super(cond);
     this.badTypeMessage = {
       es: () => `debe ser un objeto`,
-      en: () => `must be a object`,
+      en: () => `must be an object`,
     };
   }
 }
@@ -178,7 +213,7 @@ export class VObject<T extends Record<string, Verifier<any>>> extends Verifier<
     super(cond);
     this.badTypeMessage = {
       es: () => `debe ser un objeto`,
-      en: () => `must be a object`,
+      en: () => `must be an object`,
     };
   }
 }

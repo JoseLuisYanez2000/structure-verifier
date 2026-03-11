@@ -17,55 +17,53 @@ export interface VBooleanConditions
   strictMode?: MessageType<boolean, void>;
 }
 
+const TRUE_VALUES = [true, 1, "1"] as const;
+const FALSE_VALUES = [false, 0, "0"] as const;
+const BOOLEAN_STRINGS = ["true", "false"] as const;
+
+function throwBooleanError(
+  conds: VBooleanConditions | undefined,
+  badTypeMessage: IMessageLanguage<void>,
+): never {
+  throw new VerificationError([
+    {
+      key: "",
+      message: getMessage(conds?.badTypeMessage, undefined, badTypeMessage),
+    },
+  ]);
+}
+
 function vBoolean(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
   conds?: VBooleanConditions,
 ): boolean {
-  // Strict mode: only accept boolean type
   if (getValue(conds?.strictMode) === true) {
     if (typeof data !== "boolean") {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.badTypeMessage != undefined
-              ? conds?.badTypeMessage
-              : undefined,
-            undefined,
-            badTypeMessage,
-          ),
-        },
-      ]);
+      throwBooleanError(conds, badTypeMessage);
     }
+
     return data;
   }
 
-  // Non-strict mode: accept boolean, number (1/0), or string representations
-  const acceptedValues = [true, false, 1, 0, "1", "0"];
-  const acceptedStrings = ["true", "false"];
-
-  if (acceptedValues.includes(data)) {
-    return data === true || data === 1 || data === "1";
+  if (TRUE_VALUES.includes(data)) {
+    return true;
   }
 
-  if (
-    typeof data === "string" &&
-    acceptedStrings.includes(data.toLowerCase())
-  ) {
-    return data.toLowerCase() === "true";
+  if (FALSE_VALUES.includes(data)) {
+    return false;
   }
 
-  throw new VerificationError([
-    {
-      key: "",
-      message: getMessage(
-        conds?.badTypeMessage != undefined ? conds?.badTypeMessage : undefined,
-        undefined,
-        badTypeMessage,
-      ),
-    },
-  ]);
+  if (typeof data === "string") {
+    const normalized = data.toLowerCase();
+    if (
+      BOOLEAN_STRINGS.includes(normalized as (typeof BOOLEAN_STRINGS)[number])
+    ) {
+      return normalized === "true";
+    }
+  }
+
+  throwBooleanError(conds, badTypeMessage);
 }
 
 export class VBooleanNotNull extends Verifier<boolean> {

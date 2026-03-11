@@ -3,6 +3,7 @@ import { VerificationError } from "../error/v_error";
 import { VVCIsRequired } from "../interfaces/types";
 import {
   getMessage,
+  getValue,
   IMessageLanguage,
   MessageType,
 } from "../languages/message";
@@ -39,7 +40,7 @@ export abstract class Verifier<T> {
         reqVal = isRequired;
       }
     }
-    if (isRequired && (data === null || data === undefined)) {
+    if (getValue(reqVal) === true && (data === null || data === undefined)) {
       throw new VerificationError([
         {
           key: "",

@@ -73,111 +73,82 @@ const dMessages: VNumberDefaultMessages = {
   },
 };
 
+function throwNumberError<T>(
+  condition: MessageType<T, any> | string | undefined,
+  values: any,
+  fallbackMessage: IMessageLanguage<any>,
+): never {
+  throw new VerificationError([
+    {
+      key: "",
+      message: getMessage(condition, values, fallbackMessage),
+    },
+  ]);
+}
+
 function vNumber(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
   conds?: VNumberConditions,
 ): number {
   if (data === "" || isNaN(data)) {
-    throw new VerificationError([
-      {
-        key: "",
-        message: getMessage(
-          conds?.badTypeMessage != undefined
-            ? conds?.badTypeMessage
-            : undefined,
-          undefined,
-          badTypeMessage,
-        ),
-      },
-    ]);
+    throwNumberError(conds?.badTypeMessage, undefined, badTypeMessage);
   }
+
+  const numericValue = Number(data);
+  const decimalPart = String(data).split(".")[1] || "";
+
   if (conds?.min !== undefined) {
-    if (data < conds?.min) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.min,
-            { min: getValue(conds?.min) },
-            dMessages.min,
-          ),
-        },
-      ]);
+    const minValue = getValue(conds.min);
+    if (numericValue < minValue) {
+      throwNumberError(conds.min, { min: minValue }, dMessages.min);
     }
   }
+
   if (conds?.max !== undefined) {
-    if (data > conds?.max) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.max,
-            { max: getValue(conds?.max) },
-            dMessages.max,
-          ),
-        },
-      ]);
+    const maxValue = getValue(conds.max);
+    if (numericValue > maxValue) {
+      throwNumberError(conds.max, { max: maxValue }, dMessages.max);
     }
   }
+
   if (conds?.in !== undefined) {
-    if (!getValue(conds?.in).includes(data)) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.in,
-            { in: getValue(conds?.in) },
-            dMessages.in,
-          ),
-        },
-      ]);
+    const allowedValues = getValue(conds.in);
+    if (!allowedValues.includes(numericValue)) {
+      throwNumberError(conds.in, { in: allowedValues }, dMessages.in);
     }
   }
+
   if (conds?.notIn !== undefined) {
-    if (getValue(conds?.notIn).includes(data)) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.notIn,
-            { notIn: getValue(conds?.notIn) },
-            dMessages.notIn,
-          ),
-        },
-      ]);
+    const blockedValues = getValue(conds.notIn);
+    if (blockedValues.includes(numericValue)) {
+      throwNumberError(conds.notIn, { notIn: blockedValues }, dMessages.notIn);
     }
   }
-  const decimalPart = data.toString().split(".")[1] || "";
+
   if (conds?.maxDecimalPlaces !== undefined) {
-    if (decimalPart.length > getValue(conds?.maxDecimalPlaces)) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.maxDecimalPlaces,
-            { maxDecimalPlaces: getValue(conds?.maxDecimalPlaces) },
-            dMessages.maxDecimalPlaces,
-          ),
-        },
-      ]);
+    const maxDecimalPlaces = getValue(conds.maxDecimalPlaces);
+    if (decimalPart.length > maxDecimalPlaces) {
+      throwNumberError(
+        conds.maxDecimalPlaces,
+        { maxDecimalPlaces },
+        dMessages.maxDecimalPlaces,
+      );
     }
   }
+
   if (conds?.minDecimalPlaces !== undefined) {
-    if (decimalPart.length < getValue(conds?.minDecimalPlaces)) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.minDecimalPlaces,
-            { minDecimalPlaces: getValue(conds?.minDecimalPlaces) },
-            dMessages.minDecimalPlaces,
-          ),
-        },
-      ]);
+    const minDecimalPlaces = getValue(conds.minDecimalPlaces);
+    if (decimalPart.length < minDecimalPlaces) {
+      throwNumberError(
+        conds.minDecimalPlaces,
+        { minDecimalPlaces },
+        dMessages.minDecimalPlaces,
+      );
     }
   }
-  return Number(data);
+
+  return numericValue;
 }
 
 export class VNumberNotNull extends Verifier<number> {

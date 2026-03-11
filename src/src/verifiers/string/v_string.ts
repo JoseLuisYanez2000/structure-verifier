@@ -24,189 +24,125 @@ export interface VStringConditions
   ignoreCase?: MessageType<boolean, void>;
 }
 
+const dMessages = {
+  minLength: {
+    es: (values: { minLength: number }) =>
+      `debe tener una longitud mínima de ${values.minLength}`,
+    en: (values: { minLength: number }) =>
+      `must have a minimum length of ${values.minLength}`,
+  },
+  maxLength: {
+    es: (values: { maxLength: number }) =>
+      `debe tener una longitud máxima de ${values.maxLength}`,
+    en: (values: { maxLength: number }) =>
+      `must have a maximum length of ${values.maxLength}`,
+  },
+  regex: {
+    es: (values: { regex: RegExp }) =>
+      `debe cumplir con el patrón ${values.regex}`,
+    en: (values: { regex: RegExp }) => `must match the pattern ${values.regex}`,
+  },
+  notRegex: {
+    es: (values: { notRegex: RegExp }) =>
+      `no debe cumplir con el patrón ${values.notRegex}`,
+    en: (values: { notRegex: RegExp }) =>
+      `must not match the pattern ${values.notRegex}`,
+  },
+  in: {
+    es: (values: { in: string[] }) =>
+      `debe ser uno de los siguientes valores ${values.in.join(", ")}`,
+    en: (values: { in: string[] }) =>
+      `must be one of the following values ${values.in.join(", ")}`,
+  },
+  notIn: {
+    es: (values: { notIn: string[] }) =>
+      `no debe ser uno de los siguientes valores ${values.notIn.join(", ")}`,
+    en: (values: { notIn: string[] }) =>
+      `must not be one of the following values ${values.notIn.join(", ")}`,
+  },
+};
+
+function throwStringError<T>(
+  condition: MessageType<T, any> | string | undefined,
+  values: any,
+  fallbackMessage: IMessageLanguage<any>,
+): never {
+  throw new VerificationError([
+    {
+      key: "",
+      message: getMessage(condition, values, fallbackMessage),
+    },
+  ]);
+}
+
+function normalizeStrings(values: string[]) {
+  return values.map((value) => value.toLowerCase());
+}
+
 function vString(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
   conds?: VStringConditions,
 ): string {
   if (getValue(conds?.strictMode) === true && typeof data !== "string") {
-    throw new VerificationError([
-      {
-        key: "",
-        message: getMessage(
-          conds?.badTypeMessage != undefined
-            ? conds?.badTypeMessage
-            : undefined,
-          undefined,
-          badTypeMessage,
-        ),
-      },
-    ]);
+    throwStringError(conds?.badTypeMessage, undefined, badTypeMessage);
   }
-  data = String(data);
+
+  const stringValue = String(data);
+  const ignoreCase = getValue(conds?.ignoreCase) === true;
+  const comparableValue = ignoreCase ? stringValue.toLowerCase() : stringValue;
+
   if (conds?.minLength !== undefined) {
-    if (data.length < conds?.minLength) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.minLength,
-            { minLength: getValue(conds?.minLength) },
-            {
-              es: (values: { minLength: number }) =>
-                `debe tener una longitud mínima de ${values.minLength}`,
-              en: (values: { minLength: number }) =>
-                `must have a minimum length of ${values.minLength}`,
-            },
-          ),
-        },
-      ]);
+    const minLength = getValue(conds.minLength);
+    if (stringValue.length < minLength) {
+      throwStringError(conds.minLength, { minLength }, dMessages.minLength);
     }
   }
+
   if (conds?.maxLength !== undefined) {
-    if (data.length > conds?.maxLength) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.maxLength,
-            { maxLength: getValue(conds?.maxLength) },
-            {
-              es: (values: { maxLength: number }) =>
-                `debe tener una longitud máxima de ${values.maxLength}`,
-              en: (values: { maxLength: number }) =>
-                `must have a maximum length of ${values.maxLength}`,
-            },
-          ),
-        },
-      ]);
+    const maxLength = getValue(conds.maxLength);
+    if (stringValue.length > maxLength) {
+      throwStringError(conds.maxLength, { maxLength }, dMessages.maxLength);
     }
   }
+
   if (conds?.regex !== undefined) {
-    if (!getValue(conds?.regex).test(data)) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.regex,
-            { regex: getValue(conds?.regex) },
-            {
-              es: (values: { regex: RegExp }) =>
-                `debe cumplir con el patrón ${values.regex}`,
-              en: (values: { regex: RegExp }) =>
-                `must match the pattern ${values.regex}`,
-            },
-          ),
-        },
-      ]);
+    const regex = getValue(conds.regex);
+    if (!regex.test(stringValue)) {
+      throwStringError(conds.regex, { regex }, dMessages.regex);
     }
   }
+
   if (conds?.notRegex !== undefined) {
-    if (getValue(conds?.notRegex).test(data)) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds?.notRegex,
-            { notRegex: getValue(conds?.notRegex) },
-            {
-              es: (values: { notRegex: RegExp }) =>
-                `no debe cumplir con el patrón ${values.notRegex}`,
-              en: (values: { notRegex: RegExp }) =>
-                `must not match the pattern ${values.notRegex}`,
-            },
-          ),
-        },
-      ]);
+    const notRegex = getValue(conds.notRegex);
+    if (notRegex.test(stringValue)) {
+      throwStringError(conds.notRegex, { notRegex }, dMessages.notRegex);
     }
   }
+
   if (conds?.in !== undefined) {
-    if (getValue(conds?.ignoreCase) === true) {
-      if (
-        !getValue(conds?.in)
-          .map((x) => x.toLowerCase())
-          .includes(data.toLowerCase())
-      ) {
-        throw new VerificationError([
-          {
-            key: "",
-            message: getMessage(
-              conds?.in,
-              { in: getValue(conds?.in) },
-              {
-                es: (values: { in: string[] }) =>
-                  `debe ser uno de los siguientes valores ${values.in.join(", ")}`,
-                en: (values: { in: string[] }) =>
-                  `must be one of the following values ${values.in.join(", ")}`,
-              },
-            ),
-          },
-        ]);
-      }
-    } else {
-      if (!getValue(conds?.in).includes(data)) {
-        throw new VerificationError([
-          {
-            key: "",
-            message: getMessage(
-              conds?.in,
-              { in: getValue(conds?.in) },
-              {
-                es: (values: { in: string[] }) =>
-                  `debe ser uno de los siguientes valores ${values.in.join(", ")}`,
-                en: (values: { in: string[] }) =>
-                  `must be one of the following values ${values.in.join(", ")}`,
-              },
-            ),
-          },
-        ]);
-      }
+    const allowedValues = getValue(conds.in);
+    const comparableValues = ignoreCase
+      ? normalizeStrings(allowedValues)
+      : allowedValues;
+
+    if (!comparableValues.includes(comparableValue)) {
+      throwStringError(conds.in, { in: allowedValues }, dMessages.in);
     }
   }
+
   if (conds?.notIn !== undefined) {
-    if (getValue(conds?.ignoreCase) === true) {
-      if (
-        getValue(conds?.notIn)
-          .map((x) => x.toLowerCase())
-          .includes(data.toLowerCase())
-      ) {
-        throw new VerificationError([
-          {
-            key: "",
-            message: getMessage(
-              conds?.notIn,
-              { notIn: getValue(conds?.notIn) },
-              {
-                es: (values: { notIn: string[] }) =>
-                  `no debe ser uno de los siguientes valores ${values.notIn.join(", ")}`,
-                en: (values: { notIn: string[] }) =>
-                  `must not be one of the following values ${values.notIn.join(", ")}`,
-              },
-            ),
-          },
-        ]);
-      }
-    } else {
-      if (getValue(conds?.notIn).includes(data)) {
-        throw new VerificationError([
-          {
-            key: "",
-            message: getMessage(
-              conds?.notIn,
-              { notIn: getValue(conds?.notIn) },
-              {
-                es: (values: { notIn: string[] }) =>
-                  `no debe ser uno de los siguientes valores ${values.notIn.join(", ")}`,
-                en: (values: { notIn: string[] }) =>
-                  `must not be one of the following values ${values.notIn.join(", ")}`,
-              },
-            ),
-          },
-        ]);
-      }
+    const blockedValues = getValue(conds.notIn);
+    const comparableValues = ignoreCase
+      ? normalizeStrings(blockedValues)
+      : blockedValues;
+
+    if (comparableValues.includes(comparableValue)) {
+      throwStringError(conds.notIn, { notIn: blockedValues }, dMessages.notIn);
     }
   }
-  return data;
+
+  return stringValue;
 }
 
 export class VStringNotNull extends Verifier<string> {

@@ -65,6 +65,28 @@ const dMessages: VDateDefaultMessages = {
   },
 };
 
+function throwDateError<T>(
+  condition: MessageType<T, any> | string | undefined,
+  values: any,
+  fallbackMessage: IMessageLanguage<any>,
+): never {
+  throw new VerificationError([
+    {
+      key: "",
+      message: getMessage(condition, values, fallbackMessage),
+    },
+  ]);
+}
+
+function isSupportedDateInput(data: any) {
+  return (
+    typeof data === "number" ||
+    typeof data === "string" ||
+    data instanceof Date ||
+    datetime.isDayjs(data)
+  );
+}
+
 function haveTimezone(input: any) {
   const regexDesplazamiento = /(?:UTC|GMT|[+-]\d{2}:?\d{2})$/;
   const regexIdentificadorZona =
@@ -76,102 +98,86 @@ function formatWithTimeZone(format: string) {
   return /Z{1,2}|z{1,2}/.test(format);
 }
 
+function applyDefaultTimezone(date: datetime.Dayjs, timeZone: string) {
+  return datetime.tz(date.format("YYYY-MM-DD HH:mm:ss"), timeZone);
+}
+
+function parseDateWithFormat(
+  data: any,
+  format: string,
+  timeZone: string,
+  conds?: VDateConditions,
+) {
+  let date = datetime(data, format, true);
+
+  if (!date.isValid()) {
+    throwDateError(conds?.format, { format }, dMessages.format);
+  }
+
+  if (!formatWithTimeZone(format)) {
+    date = applyDefaultTimezone(date, timeZone);
+  }
+
+  return date;
+}
+
+function parseDateWithoutFormat(data: any, timeZone: string) {
+  let date = datetime(data);
+
+  if (typeof data === "string" && !haveTimezone(data)) {
+    date = applyDefaultTimezone(date, timeZone);
+  }
+
+  return date;
+}
+
+function parseDateInput(
+  data: any,
+  timeZone: string,
+  badTypeMessage: IMessageLanguage<void>,
+  conds?: VDateConditions,
+) {
+  const format = conds?.format ? getValue(conds.format) : undefined;
+  const date = format
+    ? parseDateWithFormat(data, format, timeZone, conds)
+    : parseDateWithoutFormat(data, timeZone);
+
+  if (!date.isValid()) {
+    throwDateError(conds?.badTypeMessage, undefined, badTypeMessage);
+  }
+
+  return date;
+}
+
+function validateDateRange(date: datetime.Dayjs, conds?: VDateConditions) {
+  if (conds?.maxDate) {
+    const maxDate = getValue(conds.maxDate);
+    if (date.isAfter(maxDate)) {
+      throwDateError(conds.maxDate, { maxDate }, dMessages.maxDate);
+    }
+  }
+
+  if (conds?.minDate) {
+    const minDate = getValue(conds.minDate);
+    if (date.isBefore(minDate)) {
+      throwDateError(conds.minDate, { minDate }, dMessages.minDate);
+    }
+  }
+}
+
 function vDate(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
   conds?: VDateConditions,
 ): datetime.Dayjs {
-  let timeZone = getValue(conds?.timeZone) || "UTC";
-  if (
-    data === "" ||
-    !(
-      typeof data === "number" ||
-      typeof data === "string" ||
-      data instanceof Date ||
-      datetime.isDayjs(data)
-    )
-  ) {
-    throw new VerificationError([
-      {
-        key: "",
-        message: getMessage(
-          conds?.badTypeMessage != undefined
-            ? conds?.badTypeMessage
-            : undefined,
-          undefined,
-          badTypeMessage,
-        ),
-      },
-    ]);
+  const timeZone = getValue(conds?.timeZone) || "UTC";
+
+  if (data === "" || !isSupportedDateInput(data)) {
+    throwDateError(conds?.badTypeMessage, undefined, badTypeMessage);
   }
 
-  let date: datetime.Dayjs = datetime();
-
-  if (conds?.format) {
-    let format = getValue(conds.format);
-    date = datetime(data, format, true);
-    if (!date.isValid()) {
-      throw new VerificationError([
-        {
-          key: "",
-          message: getMessage(
-            conds.format,
-            { format: format },
-            dMessages.format,
-          ),
-        },
-      ]);
-    }
-    if (!formatWithTimeZone(format)) {
-      date = datetime.tz(date.format("YYYY-MM-DD HH:mm:ss"), timeZone);
-    }
-  } else {
-    date = datetime(data);
-    if (typeof data === "string" && !haveTimezone(data)) {
-      date = datetime.tz(date.format("YYYY-MM-DD HH:mm:ss"), timeZone);
-    }
-  }
-
-  if (!date.isValid()) {
-    throw new VerificationError([
-      {
-        key: "",
-        message: getMessage(
-          conds?.badTypeMessage != undefined
-            ? conds?.badTypeMessage
-            : undefined,
-          undefined,
-          badTypeMessage,
-        ),
-      },
-    ]);
-  }
-
-  if (conds?.maxDate && date.isAfter(getValue(conds.maxDate))) {
-    throw new VerificationError([
-      {
-        key: "",
-        message: getMessage(
-          conds.maxDate,
-          { maxDate: getValue(conds.maxDate) },
-          dMessages.maxDate,
-        ),
-      },
-    ]);
-  }
-
-  if (conds?.minDate && date.isBefore(getValue(conds.minDate))) {
-    throw new VerificationError([
-      {
-        key: "",
-        message: getMessage(
-          conds.minDate,
-          { minDate: getValue(conds.minDate) },
-          dMessages.minDate,
-        ),
-      },
-    ]);
-  }
+  const date = parseDateInput(data, timeZone, badTypeMessage, conds);
+  validateDateRange(date, conds);
 
   return date;
 }

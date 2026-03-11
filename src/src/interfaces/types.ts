@@ -1,28 +1,32 @@
-export type messageResp = { key?: string, message: string, isEmpty?: boolean, isItem?: boolean };
+export type messageResp = Readonly<{
+  key?: string;
+  message: string;
+  isEmpty?: boolean;
+  isItem?: boolean;
+}>;
 
-export type MessageType<T, K> = T | { val: T, message: (values: K) => string };
+export type MessageType<T, K> = T | { val: T; message: (values: K) => string };
 
 export interface VVCIsRequired {
-    isRequired?: MessageType<boolean, void>;
-    emptyAsNull?: boolean;
+  isRequired?: MessageType<boolean, void>;
+  emptyAsNull?: boolean;
 }
 
 export interface VVCIsRequiredMessage {
-    isRequiredMessage?: string;
+  isRequiredMessage?: string;
 }
 
-
 export interface VBadTypeMessage {
-    badTypeMessage?: string;
+  badTypeMessage?: MessageType<void, void> | string;
 }
 
 export interface VDefaultValue<T> {
-    defaultValue?: T
+  defaultValue?: T;
 }
 
 export interface IInfo<T> {
-    info?: {
-        description?: string,
-        examples?: T[]
-    }
+  info?: {
+    description?: string;
+    examples?: T[];
+  };
 }
