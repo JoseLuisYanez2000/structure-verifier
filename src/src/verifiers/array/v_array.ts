@@ -21,7 +21,6 @@ export interface VArrayConditions<T extends Verifier<any>>
     VVCIsRequired {
   minLength?: number;
   maxLength?: number;
-  verifier: T;
 }
 
 interface VArrayDefaultMessages {
@@ -67,6 +66,7 @@ function prefixArrayErrorKey(index: number, key?: string) {
 function vArray<T extends Verifier<any>>(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
+  verifier: T,
   conds: VArrayConditions<T>,
 ): ReturnType<T["check"]>[] {
   if (!Array.isArray(data)) {
@@ -108,12 +108,12 @@ function vArray<T extends Verifier<any>>(
 
   for (let i = 0; i < data.length; i++) {
     try {
-      value.push(conds.verifier.check(data[i]));
+      value.push(verifier.check(data[i]));
     } catch (error) {
       if (error instanceof VerificationError) {
         errors.push(
           ...error.errorsObj.map((itemError) => {
-            if (isNestedVerifier(conds.verifier)) {
+            if (isNestedVerifier(verifier)) {
               return {
                 ...itemError,
                 key: prefixArrayErrorKey(i, itemError.key),
@@ -144,10 +144,13 @@ export class VArray<T extends Verifier<any>> extends Verifier<
     if (validatedData === null) {
       return null;
     }
-    return vArray(validatedData, this.badTypeMessage, this.cond);
+    return vArray(validatedData, this.badTypeMessage, this.verifier, this.cond);
   }
 
-  constructor(protected cond: VArrayConditions<T>) {
+  constructor(
+    protected verifier: T,
+    protected cond: VArrayConditions<T> = {} as any,
+  ) {
     super(cond);
     this.badTypeMessage = dMessages.badTypeMessage;
   }
@@ -158,10 +161,13 @@ export class VArrayNotNull<T extends Verifier<any>> extends Verifier<
 > {
   check(data: any): ReturnType<T["check"]>[] {
     const validatedData = this.isRequired(data, true);
-    return vArray(validatedData, this.badTypeMessage, this.cond);
+    return vArray(validatedData, this.badTypeMessage, this.verifier, this.cond);
   }
 
-  constructor(protected cond: VArrayConditions<T>) {
+  constructor(
+    protected verifier: T,
+    protected cond: VArrayConditions<T> = {} as any,
+  ) {
     super(cond);
     this.badTypeMessage = dMessages.badTypeMessage;
   }

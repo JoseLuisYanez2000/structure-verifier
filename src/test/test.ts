@@ -7,19 +7,19 @@ VerifierConfig.lang = "es";
 try {
   const VVal = V.ObjectNotNull(
     {
-      body: V.ArrayNotNull({
-        verifier: V.ObjectNotNull({
+      body: V.ArrayNotNull(
+        V.ObjectNotNull({
           id: V.UUIDNotNull({ allowNoHyphens: false }),
           nombre: V.StringNotNull({}),
           edad: V.NumberNotNull({ emptyAsNull: true }),
-          contactos: V.ArrayNotNull({
-            verifier: V.ObjectNotNull({
+          contactos: V.ArrayNotNull(
+            V.ObjectNotNull({
               email: V.StringNotNull({ emptyAsNull: true }),
               telefono: V.StringNotNull({}),
             }),
-          }),
+          ),
         }),
-      }),
+      ),
     },
     {
       ignoreCase: true,

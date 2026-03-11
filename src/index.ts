@@ -103,12 +103,31 @@ export const Verifiers = {
     ): VObject<T>;
   },
   Array: callableCtor(
-    <T extends Verifier<any>>(cond: VArrayConditions<T>) => new VArray<T>(cond),
-  ),
+    <T extends Verifier<any>>(verifier: T, cond?: VArrayConditions<T>) =>
+      new VArray<T>(verifier, cond),
+  ) as unknown as {
+    <T extends Verifier<any>>(
+      verifier: T,
+      cond?: VArrayConditions<T>,
+    ): VArray<T>;
+    new <T extends Verifier<any>>(
+      verifier: T,
+      cond?: VArrayConditions<T>,
+    ): VArray<T>;
+  },
   ArrayNotNull: callableCtor(
-    <T extends Verifier<any>>(cond: VArrayConditions<T>) =>
-      new VArrayNotNull<T>(cond),
-  ),
+    <T extends Verifier<any>>(verifier: T, cond?: VArrayConditions<T>) =>
+      new VArrayNotNull<T>(verifier, cond),
+  ) as unknown as {
+    <T extends Verifier<any>>(
+      verifier: T,
+      cond?: VArrayConditions<T>,
+    ): VArrayNotNull<T>;
+    new <T extends Verifier<any>>(
+      verifier: T,
+      cond?: VArrayConditions<T>,
+    ): VArrayNotNull<T>;
+  },
   Any: callableCtor((cond?: VAnyConditions) => new VAny(cond)),
   Date: callableCtor((cond?: VDateConditions) => new VDate(cond)),
   DateNotNull: callableCtor((cond?: VDateConditions) => new VDateNotNull(cond)),
