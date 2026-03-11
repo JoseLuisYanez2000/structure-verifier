@@ -8,7 +8,7 @@ describe("VObject", () => {
   };
 
   it("should validate an object correctly", () => {
-    const validator = V.Object({ properties });
+    const validator = V.Object(properties);
     expect(validator.check({ name: "John", age: 25 })).toEqual({
       name: "John",
       age: 25,
@@ -17,14 +17,14 @@ describe("VObject", () => {
   });
 
   it("should throw a validation error for invalid properties", () => {
-    const validator = V.Object({ properties, strictMode: true });
+    const validator = V.Object(properties, { strictMode: true });
     expect(() =>
       validator.check({ name: "John", age: 25, extra: "invalid" }),
     ).toThrow(VerificationError);
   });
 
   it("should throw a validation error for invalid property values", () => {
-    const validator = V.Object({ properties });
+    const validator = V.Object(properties);
     expect(() => validator.check({ name: "Jo", age: 25 })).toThrow(
       VerificationError,
     );
@@ -34,7 +34,7 @@ describe("VObject", () => {
   });
 
   it("should validate with ignoreCase for property names", () => {
-    const validator = V.Object({ properties, ignoreCase: true });
+    const validator = V.Object(properties, { ignoreCase: true });
     expect(validator.check({ NAME: "John", AGE: 25 })).toEqual({
       name: "John",
       age: 25,
@@ -42,8 +42,7 @@ describe("VObject", () => {
   });
 
   it("should throw a validation error for invalidPropertyMessage", () => {
-    const validator = V.Object({
-      properties,
+    const validator = V.Object(properties, {
       strictMode: true,
       invalidPropertyMessage: {
         val: undefined,
@@ -63,7 +62,7 @@ describe("VObjectNotNull", () => {
   };
 
   it("should validate a non-null object correctly", () => {
-    const validator = V.ObjectNotNull({ properties });
+    const validator = V.ObjectNotNull(properties);
     expect(validator.check({ name: "Jane", age: 30 })).toEqual({
       name: "Jane",
       age: 30,
@@ -71,20 +70,20 @@ describe("VObjectNotNull", () => {
   });
 
   it("should throw a validation error for null or undefined", () => {
-    const validator = V.ObjectNotNull({ properties });
+    const validator = V.ObjectNotNull(properties);
     expect(() => validator.check(null)).toThrow(VerificationError);
     expect(() => validator.check(undefined)).toThrow(VerificationError);
   });
 
   it("should throw a validation error for invalid properties", () => {
-    const validator = V.ObjectNotNull({ properties, strictMode: true });
+    const validator = V.ObjectNotNull(properties, { strictMode: true });
     expect(() =>
       validator.check({ name: "Jane", age: 30, extra: "invalid" }),
     ).toThrow(VerificationError);
   });
 
   it("should throw a validation error for invalid property values", () => {
-    const validator = V.ObjectNotNull({ properties });
+    const validator = V.ObjectNotNull(properties);
     expect(() => validator.check({ name: "Ja", age: 30 })).toThrow(
       VerificationError,
     );
@@ -94,7 +93,7 @@ describe("VObjectNotNull", () => {
   });
 
   it("should validate with ignoreCase for property names", () => {
-    const validator = V.ObjectNotNull({ properties, ignoreCase: true });
+    const validator = V.ObjectNotNull(properties, { ignoreCase: true });
     expect(validator.check({ NAME: "Jane", AGE: 30 })).toEqual({
       name: "Jane",
       age: 30,
@@ -102,8 +101,7 @@ describe("VObjectNotNull", () => {
   });
 
   it("should throw a validation error for invalidPropertyMessage", () => {
-    const validator = V.ObjectNotNull({
-      properties,
+    const validator = V.ObjectNotNull(properties, {
       strictMode: true,
       invalidPropertyMessage: {
         val: undefined,
@@ -116,12 +114,10 @@ describe("VObjectNotNull", () => {
   });
 
   it("should not allow prototype pollution when takeAllValues is enabled", () => {
-    const validator = V.ObjectNotNull({
-      properties: {
-        safe: V.StringNotNull(),
-      },
-      takeAllValues: true,
-    });
+    const validator = V.ObjectNotNull(
+      { safe: V.StringNotNull() },
+      { takeAllValues: true },
+    );
     const payload = JSON.parse('{"safe":"ok","__proto__":{"polluted":true}}');
     const result = validator.check(payload) as Record<string, unknown>;
 

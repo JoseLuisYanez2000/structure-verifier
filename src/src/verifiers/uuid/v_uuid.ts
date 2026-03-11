@@ -24,6 +24,10 @@ const UUID_MESSAGES = {
     es: () => `UUID debe incluir guiones`,
     en: () => `UUID must include hyphens`,
   },
+  invalidHyphenFormat: {
+    es: () => `UUID debe tener formato 8-4-4-4-12`,
+    en: () => `UUID must follow 8-4-4-4-12 format`,
+  },
   invalidLength: {
     es: () => `UUID inválido, longitud incorrecta`,
     en: () => `Invalid UUID, wrong length`,
@@ -54,8 +58,19 @@ function ensureUUIDType(
 
 function ensureUUIDHyphenPolicy(uuid: string, conds?: VUUIDConditions) {
   const hasHyphens = uuid.includes("-");
-  if (!conds?.allowNoHyphens && !hasHyphens) {
+
+  if (conds?.allowNoHyphens) {
+    return;
+  }
+
+  if (!hasHyphens) {
     throwUUIDError(undefined, UUID_MESSAGES.missingHyphens);
+  }
+
+  const hyphenatedFormat =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!hyphenatedFormat.test(uuid)) {
+    throwUUIDError(undefined, UUID_MESSAGES.invalidHyphenFormat);
   }
 }
 

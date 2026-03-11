@@ -17,7 +17,6 @@ export interface VObjectConditions<T extends Record<string, Verifier<any>>>
   strictMode?: boolean;
   ignoreCase?: boolean;
   takeAllValues?: boolean;
-  properties: T;
   conds?: (val: { [K in keyof T]: ReturnType<T[K]["check"]> } | null) => void;
 }
 
@@ -29,7 +28,6 @@ export interface VObjectConditionsNotNull<
   strictMode?: boolean;
   ignoreCase?: boolean;
   takeAllValues?: boolean;
-  properties: T;
   conds?: (val: { [K in keyof T]: ReturnType<T[K]["check"]> }) => void;
 }
 
@@ -67,15 +65,16 @@ function isNestedVerifier(verifier: Verifier<any>) {
 function vObject<T extends Record<string, Verifier<any>>>(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
-  conds: VObjectConditions<T> | VObjectConditionsNotNull<T>,
+  properties: T,
+  options: VObjectConditions<T> | VObjectConditionsNotNull<T>,
 ): { [K in keyof T]: ReturnType<T[K]["check"]> } {
   if (data === null || typeof data !== "object" || Array.isArray(data)) {
     throw new VerificationError([
       {
         key: "",
         message: getMessage(
-          conds?.badTypeMessage != undefined
-            ? conds?.badTypeMessage
+          options?.badTypeMessage != undefined
+            ? options?.badTypeMessage
             : undefined,
           undefined,
           badTypeMessage,
@@ -85,10 +84,12 @@ function vObject<T extends Record<string, Verifier<any>>>(
   }
 
   const keysData = Object.keys(data);
-  const keysValidations = Object.keys(conds.properties);
-  if (conds.strictMode) {
+  const keysValidations = Object.keys(properties);
+
+  if (options.strictMode) {
     let dif: string[] = [];
-    if (conds.ignoreCase) {
+
+    if (options.ignoreCase) {
       const temp = keysValidations.map((v) => v.toUpperCase());
       dif = keysData.filter((v) => !temp.includes(v.toUpperCase()));
     } else {
@@ -97,16 +98,15 @@ function vObject<T extends Record<string, Verifier<any>>>(
 
     if (dif.length > 0) {
       const error = new VerificationError(
-        dif.map((v) => {
-          return {
-            key: v,
-            message: getMessage(conds.invalidPropertyMessage, undefined, {
-              es: () => "no es una propiedad válida",
-              en: () => "is not a valid property",
-            }),
-          };
-        }),
+        dif.map((v) => ({
+          key: v,
+          message: getMessage(options.invalidPropertyMessage, undefined, {
+            es: () => "no es una propiedad válida",
+            en: () => "is not a valid property",
+          }),
+        })),
       );
+
       if (error.errors.length > 0) throw error;
     }
   }
@@ -115,11 +115,12 @@ function vObject<T extends Record<string, Verifier<any>>>(
   const value: Record<string, any> = {};
   const keyMap: { keyV: string; keyD: string }[] = [];
 
-  for (const key in conds.properties) {
-    if (conds.ignoreCase) {
+  for (const key in properties) {
+    if (options.ignoreCase) {
       const dataKey = keysData.find(
         (v) => v.toLocaleUpperCase() == key.toUpperCase(),
       );
+
       if (dataKey) {
         keyMap.push({
           keyV: key,
@@ -139,7 +140,7 @@ function vObject<T extends Record<string, Verifier<any>>>(
     }
   }
 
-  if (conds.takeAllValues) {
+  if (options.takeAllValues) {
     for (const dataKey of keysData) {
       if (!keyMap.find((v) => v.keyD == dataKey)) {
         setObjectValue(value, dataKey, getObjectValue(data, dataKey));
@@ -149,15 +150,16 @@ function vObject<T extends Record<string, Verifier<any>>>(
 
   for (const keys of keyMap) {
     try {
-      const result = conds.properties[keys.keyV].check(
+      const result = properties[keys.keyV].check(
         getObjectValue(data, keys.keyD),
       );
+
       setObjectValue(value, keys.keyV, result);
     } catch (error: any) {
       if (error instanceof VerificationError) {
         errors.push(
           ...error.errorsObj.map((v) => {
-            const cond = conds.properties[keys.keyV];
+            const cond = properties[keys.keyV];
 
             if (isNestedVerifier(cond)) {
               v.key = keys.keyV + (v.key ? "." + v.key : "");
@@ -174,46 +176,68 @@ function vObject<T extends Record<string, Verifier<any>>>(
       }
     }
   }
+
   if (errors.length > 0) {
     throw new VerificationError(errors);
   }
+
   const typedValue = value as { [K in keyof T]: ReturnType<T[K]["check"]> };
-  if (conds.conds) {
-    conds.conds(typedValue);
+
+  if (options.conds) {
+    options.conds(typedValue);
   }
+
   return typedValue;
 }
 
 export class VObjectNotNull<
   T extends Record<string, Verifier<any>>,
 > extends Verifier<{ [K in keyof T]: ReturnType<T[K]["check"]> }> {
-  check(data: any): { [K in keyof T]: ReturnType<T[K]["check"]> } {
-    return vObject(this.isRequired(data, true), this.badTypeMessage, this.cond);
-  }
-  constructor(protected cond: VObjectConditionsNotNull<T>) {
-    super(cond);
+  constructor(
+    protected properties: T,
+    protected conditions: VObjectConditionsNotNull<T> = {} as any,
+  ) {
+    super(conditions);
     this.badTypeMessage = {
       es: () => `debe ser un objeto`,
       en: () => `must be an object`,
     };
+  }
+
+  check(data: any): { [K in keyof T]: ReturnType<T[K]["check"]> } {
+    return vObject(
+      this.isRequired(data, true),
+      this.badTypeMessage,
+      this.properties,
+      this.conditions,
+    );
   }
 }
 
 export class VObject<T extends Record<string, Verifier<any>>> extends Verifier<
   { [K in keyof T]: ReturnType<T[K]["check"]> } | null
 > {
-  check(data: any): { [K in keyof T]: ReturnType<T[K]["check"]> } | null {
-    let val = this.isRequired(data);
-    if (val === null || val === undefined) {
-      return null;
-    }
-    return vObject(val, this.badTypeMessage, this.cond);
-  }
-  constructor(protected cond: VObjectConditions<T>) {
-    super(cond);
+  constructor(
+    protected properties: T,
+    protected conditions: VObjectConditions<T> = {} as any,
+  ) {
+    super(conditions);
     this.badTypeMessage = {
       es: () => `debe ser un objeto`,
       en: () => `must be an object`,
     };
+  }
+
+  check(data: any): { [K in keyof T]: ReturnType<T[K]["check"]> } | null {
+    let val = this.isRequired(data);
+
+    if (val === null || val === undefined) {
+      if (this.conditions.conds) {
+        this.conditions.conds(null);
+      }
+      return null;
+    }
+
+    return vObject(val, this.badTypeMessage, this.properties, this.conditions);
   }
 }

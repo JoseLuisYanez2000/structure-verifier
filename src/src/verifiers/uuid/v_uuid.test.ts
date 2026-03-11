@@ -28,6 +28,12 @@ describe("VUUID", () => {
     expect(() => validator.check(uuidNoHyphen)).toThrow(VerificationError);
   });
 
+  it("should throw error for UUID with hyphens in wrong positions", () => {
+    const validator = V.UUID({ allowNoHyphens: false });
+    const malformedHyphens = "123e4567e-89b1-2d3a-4564-26614174000";
+    expect(() => validator.check(malformedHyphens)).toThrow(VerificationError);
+  });
+
   it("should throw error for invalid UUID format", () => {
     const validator = V.UUID();
     const invalidUuid = "123e4567-e89b-12d3-a456-426614174zzz";
@@ -90,4 +96,3 @@ describe("VUUIDNotNull", () => {
     );
   });
 });
-

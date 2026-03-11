@@ -74,13 +74,34 @@ export const Verifiers = {
   ),
   ObjectNotNull: callableCtor(
     <T extends Record<string, Verifier<any>>>(
-      cond: VObjectConditionsNotNull<T>,
-    ) => new VObjectNotNull<T>(cond),
-  ),
+      properties: T,
+      cond?: VObjectConditionsNotNull<T>,
+    ) => new VObjectNotNull<T>(properties, cond),
+  ) as unknown as {
+    <T extends Record<string, Verifier<any>>>(
+      properties: T,
+      cond?: VObjectConditionsNotNull<T>,
+    ): VObjectNotNull<T>;
+    new <T extends Record<string, Verifier<any>>>(
+      properties: T,
+      cond?: VObjectConditionsNotNull<T>,
+    ): VObjectNotNull<T>;
+  },
   Object: callableCtor(
-    <T extends Record<string, Verifier<any>>>(cond: VObjectConditions<T>) =>
-      new VObject<T>(cond),
-  ),
+    <T extends Record<string, Verifier<any>>>(
+      properties: T,
+      cond?: VObjectConditions<T>,
+    ) => new VObject<T>(properties, cond),
+  ) as unknown as {
+    <T extends Record<string, Verifier<any>>>(
+      properties: T,
+      cond?: VObjectConditions<T>,
+    ): VObject<T>;
+    new <T extends Record<string, Verifier<any>>>(
+      properties: T,
+      cond?: VObjectConditions<T>,
+    ): VObject<T>;
+  },
   Array: callableCtor(
     <T extends Verifier<any>>(cond: VArrayConditions<T>) => new VArray<T>(cond),
   ),
