@@ -12,7 +12,7 @@ import {
 } from "../../languages/message";
 import { Verifier } from "../verifier";
 
-interface VBooleanConditions
+export interface VBooleanConditions
   extends VBadTypeMessage, VDefaultValue<boolean>, VVCIsRequired {
   strictMode?: MessageType<boolean, void>;
 }

@@ -14,7 +14,7 @@ import { VerificationError } from "../../error/v_error";
 import { Verifier } from "../verifier";
 import { datetime } from "../../utils/datetime";
 
-interface VDateConditions
+export interface VDateConditions
   extends
     VBadTypeMessage,
     VDefaultValue<datetime.Dayjs>,

@@ -1,18 +1,40 @@
 import { VAny } from "./src/verifiers/any/v_any";
+import { VAnyConditions } from "./src/verifiers/any/v_any";
 import { VArray, VArrayNotNull } from "./src/verifiers/array/v_array";
+import { VArrayConditions } from "./src/verifiers/array/v_array";
 import { VBoolean, VBooleanNotNull } from "./src/verifiers/boolean/v_boolean";
+import { VBooleanConditions } from "./src/verifiers/boolean/v_boolean";
 import { VDate, VDateNotNull } from "./src/verifiers/date/v_date";
+import { VDateConditions } from "./src/verifiers/date/v_date";
 import { VNumber, VNumberNotNull } from "./src/verifiers/number/v_number";
+import { VNumberConditions } from "./src/verifiers/number/v_number";
 import { VObject, VObjectNotNull } from "./src/verifiers/object/v_object";
+import {
+  VObjectConditions,
+  VObjectConditionsNotNull,
+} from "./src/verifiers/object/v_object";
 import { VString, VStringNotNull } from "./src/verifiers/string/v_string";
+import { VStringConditions } from "./src/verifiers/string/v_string";
 import { VUUID, VUUIDNotNull } from "./src/verifiers/uuid/v_uuid";
-import { Verifier } from './src/verifiers/verifier';
+import { VUUIDConditions } from "./src/verifiers/uuid/v_uuid";
+import { Verifier } from "./src/verifiers/verifier";
 
 export { VerificationError } from "./src/error/v_error";
 
-export { InferType } from "./src/verifiers/type";
+export { InferFactoryType, InferType } from "./src/verifiers/type";
 
-export { Verifier } from './src/verifiers/verifier';
+export { Verifier } from "./src/verifiers/verifier";
+export type { VAnyConditions } from "./src/verifiers/any/v_any";
+export type { VArrayConditions } from "./src/verifiers/array/v_array";
+export type { VBooleanConditions } from "./src/verifiers/boolean/v_boolean";
+export type { VDateConditions } from "./src/verifiers/date/v_date";
+export type { VNumberConditions } from "./src/verifiers/number/v_number";
+export type {
+  VObjectConditions,
+  VObjectConditionsNotNull,
+} from "./src/verifiers/object/v_object";
+export type { VStringConditions } from "./src/verifiers/string/v_string";
+export type { VUUIDConditions } from "./src/verifiers/uuid/v_uuid";
 export { VNumberNotNull, VNumber } from "./src/verifiers/number/v_number";
 export { VStringNotNull, VString } from "./src/verifiers/string/v_string";
 export { VBooleanNotNull, VBoolean } from "./src/verifiers/boolean/v_boolean";
@@ -23,22 +45,52 @@ export { VDateNotNull, VDate } from "./src/verifiers/date/v_date";
 export { VUUIDNotNull, VUUID } from "./src/verifiers/uuid/v_uuid";
 export { datetime } from "./src/utils/datetime";
 
+type CallableCtor<T, A extends any[] = any[]> = {
+  (...args: A): T;
+  new (...args: A): T;
+};
+
+function callableCtor<T, A extends any[]>(
+  factory: (...args: A) => T,
+): CallableCtor<T, A> {
+  return function (...args: A): T {
+    return factory(...args);
+  } as CallableCtor<T, A>;
+}
 
 export const Verifiers = {
-    Verifier,
-    NumberNotNull: VNumberNotNull,
-    Number: VNumber,
-    StringNotNull: VStringNotNull,
-    String: VString,
-    Boolean: VBoolean,
-    BooleanNotNull: VBooleanNotNull,
-    ObjectNotNull: VObjectNotNull,
-    Object: VObject,
-    Array: VArray,
-    ArrayNotNull: VArrayNotNull,
-    Any: VAny,
-    Date: VDate,
-    DateNotNull: VDateNotNull,
-    UUIDNotNull: VUUIDNotNull,
-    UUID: VUUID
-}
+  Verifier,
+  NumberNotNull: callableCtor(
+    (cond?: VNumberConditions) => new VNumberNotNull(cond),
+  ),
+  Number: callableCtor((cond?: VNumberConditions) => new VNumber(cond)),
+  StringNotNull: callableCtor(
+    (cond?: VStringConditions) => new VStringNotNull(cond),
+  ),
+  String: callableCtor((cond?: VStringConditions) => new VString(cond)),
+  Boolean: callableCtor((cond?: VBooleanConditions) => new VBoolean(cond)),
+  BooleanNotNull: callableCtor(
+    (cond?: VBooleanConditions) => new VBooleanNotNull(cond),
+  ),
+  ObjectNotNull: callableCtor(
+    <T extends Record<string, Verifier<any>>>(
+      cond: VObjectConditionsNotNull<T>,
+    ) => new VObjectNotNull<T>(cond),
+  ),
+  Object: callableCtor(
+    <T extends Record<string, Verifier<any>>>(cond: VObjectConditions<T>) =>
+      new VObject<T>(cond),
+  ),
+  Array: callableCtor(
+    <T extends Verifier<any>>(cond: VArrayConditions<T>) => new VArray<T>(cond),
+  ),
+  ArrayNotNull: callableCtor(
+    <T extends Verifier<any>>(cond: VArrayConditions<T>) =>
+      new VArrayNotNull<T>(cond),
+  ),
+  Any: callableCtor((cond?: VAnyConditions) => new VAny(cond)),
+  Date: callableCtor((cond?: VDateConditions) => new VDate(cond)),
+  DateNotNull: callableCtor((cond?: VDateConditions) => new VDateNotNull(cond)),
+  UUIDNotNull: callableCtor((cond?: VUUIDConditions) => new VUUIDNotNull(cond)),
+  UUID: callableCtor((cond?: VUUIDConditions) => new VUUID(cond)),
+};

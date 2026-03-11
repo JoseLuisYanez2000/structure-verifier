@@ -13,7 +13,7 @@ import {
 } from "../../languages/message";
 import { Verifier } from "../verifier";
 
-interface VNumberConditions
+export interface VNumberConditions
   extends VBadTypeMessage, VDefaultValue<number>, VVCIsRequired, IInfo<number> {
   min?: MessageType<number, { min: number }>;
   max?: MessageType<number, { max: number }>;

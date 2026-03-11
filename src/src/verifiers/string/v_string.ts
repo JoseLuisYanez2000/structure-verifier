@@ -12,7 +12,7 @@ import {
 } from "../../languages/message";
 import { Verifier } from "../verifier";
 
-interface VStringConditions
+export interface VStringConditions
   extends VBadTypeMessage, VDefaultValue<string>, VVCIsRequired {
   minLength?: MessageType<number, { minLength: number }>;
   maxLength?: MessageType<number, { maxLength: number }>;

@@ -12,7 +12,7 @@ import {
   MessageType,
 } from "../../interfaces/types";
 
-interface VUUIDConditions
+export interface VUUIDConditions
   extends VBadTypeMessage, VDefaultValue<string>, VVCIsRequired {
   version?: 1 | 2 | 3 | 4 | 5;
   allowNoHyphens?: boolean;
