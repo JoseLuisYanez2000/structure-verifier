@@ -177,4 +177,8 @@ export class VString extends Verifier<string | null> {
       en: () => `must be a string`,
     };
   }
+
+  required(): VStringNotNull {
+    return new VStringNotNull(this.cond);
+  }
 }

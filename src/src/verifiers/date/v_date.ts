@@ -209,4 +209,8 @@ export class VDate extends Verifier<datetime.Dayjs | null> {
     this.cond = cond;
     this.badTypeMessage = dMessages.badTypeMessage;
   }
+
+  required(): VDateNotNull {
+    return new VDateNotNull(this.cond);
+  }
 }

@@ -168,4 +168,8 @@ export class VUUID extends Verifier<string | null> {
     if (val === null || val === undefined) return null;
     return vUUID(val, this.badTypeMessage, this.cond);
   }
+
+  required(): VUUIDNotNull {
+    return new VUUIDNotNull(this.cond);
+  }
 }

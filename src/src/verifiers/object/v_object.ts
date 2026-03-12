@@ -240,4 +240,11 @@ export class VObject<T extends Record<string, Verifier<any>>> extends Verifier<
 
     return vObject(val, this.badTypeMessage, this.properties, this.conditions);
   }
+
+  required(): VObjectNotNull<T> {
+    return new VObjectNotNull<T>(
+      this.properties,
+      this.conditions as unknown as VObjectConditionsNotNull<T>,
+    );
+  }
 }

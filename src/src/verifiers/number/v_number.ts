@@ -178,4 +178,8 @@ export class VNumber extends Verifier<number | null> {
     this.cond = cond;
     this.badTypeMessage = dMessages.badTypeMessage;
   }
+
+  required(): VNumberNotNull {
+    return new VNumberNotNull(this.cond);
+  }
 }

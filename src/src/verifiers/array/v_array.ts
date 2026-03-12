@@ -154,6 +154,10 @@ export class VArray<T extends Verifier<any>> extends Verifier<
     super(cond);
     this.badTypeMessage = dMessages.badTypeMessage;
   }
+
+  required(): VArrayNotNull<T> {
+    return new VArrayNotNull<T>(this.verifier, this.cond);
+  }
 }
 
 export class VArrayNotNull<T extends Verifier<any>> extends Verifier<

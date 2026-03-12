@@ -99,4 +99,8 @@ export class VBoolean extends Verifier<boolean | null> {
       en: () => `must be a boolean`,
     };
   }
+
+  required(): VBooleanNotNull {
+    return new VBooleanNotNull(this.cond);
+  }
 }
