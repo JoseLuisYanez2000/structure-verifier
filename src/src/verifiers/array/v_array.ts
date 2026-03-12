@@ -1,5 +1,6 @@
 import { VerificationError } from "../../error/v_error";
 import {
+  MessageType,
   messageResp,
   VBadTypeMessage,
   VDefaultValue,
@@ -10,6 +11,10 @@ import {
   getValue,
   IMessageLanguage,
 } from "../../languages/message";
+import {
+  ConditionMessageInput,
+  conditionWithValue,
+} from "../helpers/conditionMessage";
 import { VAny } from "../any/v_any";
 import { VObject, VObjectNotNull } from "../object/v_object";
 import { Verifier } from "../verifier";
@@ -19,8 +24,8 @@ export interface VArrayConditions<T extends Verifier<any>>
     VBadTypeMessage,
     VDefaultValue<ReturnType<T["check"]>[]>,
     VVCIsRequired {
-  minLength?: number;
-  maxLength?: number;
+  minLength?: MessageType<number, { minLength: number }>;
+  maxLength?: MessageType<number, { maxLength: number }>;
 }
 
 interface VArrayDefaultMessages {
@@ -78,25 +83,29 @@ function vArray<T extends Verifier<any>>(
     ]);
   }
 
-  if (conds.minLength !== undefined && data.length < conds.minLength) {
+  const minLength =
+    conds.minLength !== undefined ? getValue(conds.minLength) : undefined;
+  if (minLength !== undefined && data.length < minLength) {
     throw new VerificationError([
       {
         key: "",
         message: getMessage(
           conds?.minLength,
-          { minLength: getValue(conds?.minLength) },
+          { minLength },
           dMessages.minLength,
         ),
       },
     ]);
   }
-  if (conds.maxLength !== undefined && data.length > conds.maxLength) {
+  const maxLength =
+    conds.maxLength !== undefined ? getValue(conds.maxLength) : undefined;
+  if (maxLength !== undefined && data.length > maxLength) {
     throw new VerificationError([
       {
         key: "",
         message: getMessage(
           conds?.maxLength,
-          { maxLength: getValue(conds?.maxLength) },
+          { maxLength },
           dMessages.maxLength,
         ),
       },
@@ -147,6 +156,26 @@ export class VArray<T extends Verifier<any>> extends Verifier<
     return vArray(validatedData, this.badTypeMessage, this.verifier, this.cond);
   }
 
+  minLength(
+    n: number,
+    message?: ConditionMessageInput<number, { minLength: number }>,
+  ): VArray<T> {
+    return new VArray<T>(this.verifier, {
+      ...this.cond,
+      minLength: conditionWithValue<number, { minLength: number }>(n, message),
+    });
+  }
+
+  maxLength(
+    n: number,
+    message?: ConditionMessageInput<number, { maxLength: number }>,
+  ): VArray<T> {
+    return new VArray<T>(this.verifier, {
+      ...this.cond,
+      maxLength: conditionWithValue<number, { maxLength: number }>(n, message),
+    });
+  }
+
   constructor(
     protected verifier: T,
     protected cond: VArrayConditions<T> = {} as any,
@@ -166,6 +195,26 @@ export class VArrayNotNull<T extends Verifier<any>> extends Verifier<
   check(data: any): ReturnType<T["check"]>[] {
     const validatedData = this.isRequired(data, true);
     return vArray(validatedData, this.badTypeMessage, this.verifier, this.cond);
+  }
+
+  minLength(
+    n: number,
+    message?: ConditionMessageInput<number, { minLength: number }>,
+  ): VArrayNotNull<T> {
+    return new VArrayNotNull<T>(this.verifier, {
+      ...this.cond,
+      minLength: conditionWithValue<number, { minLength: number }>(n, message),
+    });
+  }
+
+  maxLength(
+    n: number,
+    message?: ConditionMessageInput<number, { maxLength: number }>,
+  ): VArrayNotNull<T> {
+    return new VArrayNotNull<T>(this.verifier, {
+      ...this.cond,
+      maxLength: conditionWithValue<number, { maxLength: number }>(n, message),
+    });
   }
 
   constructor(

@@ -10,6 +10,10 @@ import {
   IMessageLanguage,
   getValue,
 } from "../../languages/message";
+import {
+  ConditionMessageInput,
+  conditionWithValue,
+} from "../helpers/conditionMessage";
 import { Verifier } from "../verifier";
 
 export interface VStringConditions
@@ -85,7 +89,11 @@ function vString(
   conds?: VStringConditions,
 ): string {
   if (getValue(conds?.strictMode) === true && typeof data !== "string") {
-    throwStringError(conds?.badTypeMessage, undefined, badTypeMessage);
+    throwStringError(
+      conds?.strictMode ?? conds?.badTypeMessage,
+      undefined,
+      badTypeMessage,
+    );
   }
 
   const stringValue = String(data);
@@ -154,6 +162,89 @@ export class VStringNotNull extends Verifier<string> {
     );
   }
 
+  minLength(
+    n: number,
+    message?: ConditionMessageInput<number, { minLength: number }>,
+  ): VStringNotNull {
+    return new VStringNotNull({
+      ...this.cond,
+      minLength: conditionWithValue<number, { minLength: number }>(n, message),
+    });
+  }
+
+  maxLength(
+    n: number,
+    message?: ConditionMessageInput<number, { maxLength: number }>,
+  ): VStringNotNull {
+    return new VStringNotNull({
+      ...this.cond,
+      maxLength: conditionWithValue<number, { maxLength: number }>(n, message),
+    });
+  }
+
+  regex(
+    pattern: RegExp,
+    message?: ConditionMessageInput<RegExp, { regex: RegExp }>,
+  ): VStringNotNull {
+    return new VStringNotNull({
+      ...this.cond,
+      regex: conditionWithValue<RegExp, { regex: RegExp }>(pattern, message),
+    });
+  }
+
+  notRegex(
+    pattern: RegExp,
+    message?: ConditionMessageInput<RegExp, { notRegex: RegExp }>,
+  ): VStringNotNull {
+    return new VStringNotNull({
+      ...this.cond,
+      notRegex: conditionWithValue<RegExp, { notRegex: RegExp }>(
+        pattern,
+        message,
+      ),
+    });
+  }
+
+  in(
+    values: string[],
+    message?: ConditionMessageInput<string[], { in: string[] }>,
+  ): VStringNotNull {
+    return new VStringNotNull({
+      ...this.cond,
+      in: conditionWithValue<string[], { in: string[] }>(values, message),
+    });
+  }
+
+  notIn(
+    values: string[],
+    message?: ConditionMessageInput<string[], { notIn: string[] }>,
+  ): VStringNotNull {
+    return new VStringNotNull({
+      ...this.cond,
+      notIn: conditionWithValue<string[], { notIn: string[] }>(values, message),
+    });
+  }
+
+  strictMode(
+    enabled = true,
+    message?: ConditionMessageInput<boolean, void>,
+  ): VStringNotNull {
+    return new VStringNotNull({
+      ...this.cond,
+      strictMode: conditionWithValue<boolean, void>(enabled, message),
+    });
+  }
+
+  ignoreCase(
+    enabled = true,
+    message?: ConditionMessageInput<boolean, void>,
+  ): VStringNotNull {
+    return new VStringNotNull({
+      ...this.cond,
+      ignoreCase: conditionWithValue<boolean, void>(enabled, message),
+    });
+  }
+
   trim(): Verifier<string> {
     return this.transform((value) => value.trim());
   }
@@ -204,6 +295,89 @@ export class VString extends Verifier<string | null> {
       return null;
     }
     return vString(val, this.badTypeMessage, this.cond);
+  }
+
+  minLength(
+    n: number,
+    message?: ConditionMessageInput<number, { minLength: number }>,
+  ): VString {
+    return new VString({
+      ...this.cond,
+      minLength: conditionWithValue<number, { minLength: number }>(n, message),
+    });
+  }
+
+  maxLength(
+    n: number,
+    message?: ConditionMessageInput<number, { maxLength: number }>,
+  ): VString {
+    return new VString({
+      ...this.cond,
+      maxLength: conditionWithValue<number, { maxLength: number }>(n, message),
+    });
+  }
+
+  regex(
+    pattern: RegExp,
+    message?: ConditionMessageInput<RegExp, { regex: RegExp }>,
+  ): VString {
+    return new VString({
+      ...this.cond,
+      regex: conditionWithValue<RegExp, { regex: RegExp }>(pattern, message),
+    });
+  }
+
+  notRegex(
+    pattern: RegExp,
+    message?: ConditionMessageInput<RegExp, { notRegex: RegExp }>,
+  ): VString {
+    return new VString({
+      ...this.cond,
+      notRegex: conditionWithValue<RegExp, { notRegex: RegExp }>(
+        pattern,
+        message,
+      ),
+    });
+  }
+
+  in(
+    values: string[],
+    message?: ConditionMessageInput<string[], { in: string[] }>,
+  ): VString {
+    return new VString({
+      ...this.cond,
+      in: conditionWithValue<string[], { in: string[] }>(values, message),
+    });
+  }
+
+  notIn(
+    values: string[],
+    message?: ConditionMessageInput<string[], { notIn: string[] }>,
+  ): VString {
+    return new VString({
+      ...this.cond,
+      notIn: conditionWithValue<string[], { notIn: string[] }>(values, message),
+    });
+  }
+
+  strictMode(
+    enabled = true,
+    message?: ConditionMessageInput<boolean, void>,
+  ): VString {
+    return new VString({
+      ...this.cond,
+      strictMode: conditionWithValue<boolean, void>(enabled, message),
+    });
+  }
+
+  ignoreCase(
+    enabled = true,
+    message?: ConditionMessageInput<boolean, void>,
+  ): VString {
+    return new VString({
+      ...this.cond,
+      ignoreCase: conditionWithValue<boolean, void>(enabled, message),
+    });
   }
 
   trim(): Verifier<string | null> {

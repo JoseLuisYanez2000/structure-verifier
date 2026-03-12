@@ -15,6 +15,16 @@ describe("VUUID - strictMode validation", () => {
     expect(() => validator.check({})).toThrow(VerificationError);
   });
 
+  it("should use custom strictMode message", () => {
+    const validator = V.UUID({
+      strictMode: {
+        val: true,
+        message: () => "uuid estricto",
+      },
+    });
+    expect(() => validator.check(123 as any)).toThrow("uuid estricto");
+  });
+
   it("should convert to string in non-strict mode", () => {
     const validator = V.UUID();
     // Even in non-strict mode, it needs to be a valid UUID format
@@ -39,5 +49,13 @@ describe("VUUIDNotNull - strictMode validation", () => {
     expect(validator.check(uuid)).toBe(uuid);
     expect(() => validator.check(null)).toThrow(VerificationError);
     expect(() => validator.check(123)).toThrow(VerificationError);
+  });
+
+  it("should use custom strictMode message with fluent api", () => {
+    const validator = V.UUIDNotNull().strictMode(
+      true,
+      "uuid estricto not null",
+    );
+    expect(() => validator.check(123 as any)).toThrow("uuid estricto not null");
   });
 });

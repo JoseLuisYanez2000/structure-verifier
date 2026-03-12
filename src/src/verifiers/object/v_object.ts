@@ -212,6 +212,27 @@ export class VObjectNotNull<
       this.conditions,
     );
   }
+
+  strictMode(enabled = true): VObjectNotNull<T> {
+    return new VObjectNotNull<T>(this.properties, {
+      ...this.conditions,
+      strictMode: enabled,
+    });
+  }
+
+  ignoreCase(enabled = true): VObjectNotNull<T> {
+    return new VObjectNotNull<T>(this.properties, {
+      ...this.conditions,
+      ignoreCase: enabled,
+    });
+  }
+
+  takeAllValues(enabled = true): VObjectNotNull<T> {
+    return new VObjectNotNull<T>(this.properties, {
+      ...this.conditions,
+      takeAllValues: enabled,
+    });
+  }
 }
 
 export class VObject<T extends Record<string, Verifier<any>>> extends Verifier<
@@ -239,6 +260,27 @@ export class VObject<T extends Record<string, Verifier<any>>> extends Verifier<
     }
 
     return vObject(val, this.badTypeMessage, this.properties, this.conditions);
+  }
+
+  strictMode(enabled = true): VObject<T> {
+    return new VObject<T>(this.properties, {
+      ...this.conditions,
+      strictMode: enabled,
+    });
+  }
+
+  ignoreCase(enabled = true): VObject<T> {
+    return new VObject<T>(this.properties, {
+      ...this.conditions,
+      ignoreCase: enabled,
+    });
+  }
+
+  takeAllValues(enabled = true): VObject<T> {
+    return new VObject<T>(this.properties, {
+      ...this.conditions,
+      takeAllValues: enabled,
+    });
   }
 
   required(): VObjectNotNull<T> {

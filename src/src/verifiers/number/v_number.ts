@@ -11,6 +11,10 @@ import {
   IMessageLanguage,
   getValue,
 } from "../../languages/message";
+import {
+  ConditionMessageInput,
+  conditionWithValue,
+} from "../helpers/conditionMessage";
 import { Verifier } from "../verifier";
 
 export interface VNumberConditions
@@ -159,6 +163,73 @@ export class VNumberNotNull extends Verifier<number> {
       this.cond,
     );
   }
+
+  min(
+    n: number,
+    message?: ConditionMessageInput<number, { min: number }>,
+  ): VNumberNotNull {
+    return new VNumberNotNull({
+      ...this.cond,
+      min: conditionWithValue<number, { min: number }>(n, message),
+    });
+  }
+
+  max(
+    n: number,
+    message?: ConditionMessageInput<number, { max: number }>,
+  ): VNumberNotNull {
+    return new VNumberNotNull({
+      ...this.cond,
+      max: conditionWithValue<number, { max: number }>(n, message),
+    });
+  }
+
+  in(
+    values: number[],
+    message?: ConditionMessageInput<number[], { in: number[] }>,
+  ): VNumberNotNull {
+    return new VNumberNotNull({
+      ...this.cond,
+      in: conditionWithValue<number[], { in: number[] }>(values, message),
+    });
+  }
+
+  notIn(
+    values: number[],
+    message?: ConditionMessageInput<number[], { notIn: number[] }>,
+  ): VNumberNotNull {
+    return new VNumberNotNull({
+      ...this.cond,
+      notIn: conditionWithValue<number[], { notIn: number[] }>(values, message),
+    });
+  }
+
+  maxDecimalPlaces(
+    n: number,
+    message?: ConditionMessageInput<number, { maxDecimalPlaces: number }>,
+  ): VNumberNotNull {
+    return new VNumberNotNull({
+      ...this.cond,
+      maxDecimalPlaces: conditionWithValue<
+        number,
+        { maxDecimalPlaces: number }
+      >(n, message),
+    });
+  }
+
+  minDecimalPlaces(
+    n: number,
+    message?: ConditionMessageInput<number, { minDecimalPlaces: number }>,
+  ): VNumberNotNull {
+    return new VNumberNotNull({
+      ...this.cond,
+      minDecimalPlaces: conditionWithValue<
+        number,
+        { minDecimalPlaces: number }
+      >(n, message),
+    });
+  }
+
   constructor(protected cond?: VNumberConditions) {
     super(cond);
     this.badTypeMessage = dMessages.badTypeMessage;
@@ -173,6 +244,73 @@ export class VNumber extends Verifier<number | null> {
     }
     return vNumber(val, this.badTypeMessage, this.cond);
   }
+
+  min(
+    n: number,
+    message?: ConditionMessageInput<number, { min: number }>,
+  ): VNumber {
+    return new VNumber({
+      ...this.cond,
+      min: conditionWithValue<number, { min: number }>(n, message),
+    });
+  }
+
+  max(
+    n: number,
+    message?: ConditionMessageInput<number, { max: number }>,
+  ): VNumber {
+    return new VNumber({
+      ...this.cond,
+      max: conditionWithValue<number, { max: number }>(n, message),
+    });
+  }
+
+  in(
+    values: number[],
+    message?: ConditionMessageInput<number[], { in: number[] }>,
+  ): VNumber {
+    return new VNumber({
+      ...this.cond,
+      in: conditionWithValue<number[], { in: number[] }>(values, message),
+    });
+  }
+
+  notIn(
+    values: number[],
+    message?: ConditionMessageInput<number[], { notIn: number[] }>,
+  ): VNumber {
+    return new VNumber({
+      ...this.cond,
+      notIn: conditionWithValue<number[], { notIn: number[] }>(values, message),
+    });
+  }
+
+  maxDecimalPlaces(
+    n: number,
+    message?: ConditionMessageInput<number, { maxDecimalPlaces: number }>,
+  ): VNumber {
+    return new VNumber({
+      ...this.cond,
+      maxDecimalPlaces: conditionWithValue<
+        number,
+        { maxDecimalPlaces: number }
+      >(n, message),
+    });
+  }
+
+  minDecimalPlaces(
+    n: number,
+    message?: ConditionMessageInput<number, { minDecimalPlaces: number }>,
+  ): VNumber {
+    return new VNumber({
+      ...this.cond,
+      minDecimalPlaces: conditionWithValue<
+        number,
+        { minDecimalPlaces: number }
+      >(n, message),
+    });
+  }
+
   constructor(protected cond?: VNumberConditions) {
     super(cond);
     this.cond = cond;

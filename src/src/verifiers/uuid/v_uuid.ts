@@ -6,6 +6,10 @@ import {
   IMessageLanguage,
 } from "../../languages/message";
 import {
+  ConditionMessageInput,
+  conditionWithValue,
+} from "../helpers/conditionMessage";
+import {
   VBadTypeMessage,
   VDefaultValue,
   VVCIsRequired,
@@ -35,7 +39,7 @@ const UUID_MESSAGES = {
 };
 
 function throwUUIDError(
-  condition: MessageType<void, void> | string | undefined,
+  condition: MessageType<any, any> | string | undefined,
   badTypeMessage: IMessageLanguage<void>,
 ) {
   throw new VerificationError([
@@ -52,7 +56,7 @@ function ensureUUIDType(
   conds?: VUUIDConditions,
 ) {
   if (getValue(conds?.strictMode) === true && typeof data !== "string") {
-    throwUUIDError(conds?.badTypeMessage, badTypeMessage);
+    throwUUIDError(conds?.strictMode ?? conds?.badTypeMessage, badTypeMessage);
   }
 }
 
@@ -152,6 +156,24 @@ export class VUUIDNotNull extends Verifier<string> {
       this.cond,
     );
   }
+
+  version(v: 1 | 2 | 3 | 4 | 5): VUUIDNotNull {
+    return new VUUIDNotNull({ ...this.cond, version: v });
+  }
+
+  allowNoHyphens(enabled = true): VUUIDNotNull {
+    return new VUUIDNotNull({ ...this.cond, allowNoHyphens: enabled });
+  }
+
+  strictMode(
+    enabled = true,
+    message?: ConditionMessageInput<boolean, void>,
+  ): VUUIDNotNull {
+    return new VUUIDNotNull({
+      ...this.cond,
+      strictMode: conditionWithValue<boolean, void>(enabled, message),
+    });
+  }
 }
 
 export class VUUID extends Verifier<string | null> {
@@ -167,6 +189,24 @@ export class VUUID extends Verifier<string | null> {
     const val = this.isRequired(data, undefined, this.cond?.defaultValue);
     if (val === null || val === undefined) return null;
     return vUUID(val, this.badTypeMessage, this.cond);
+  }
+
+  version(v: 1 | 2 | 3 | 4 | 5): VUUID {
+    return new VUUID({ ...this.cond, version: v });
+  }
+
+  allowNoHyphens(enabled = true): VUUID {
+    return new VUUID({ ...this.cond, allowNoHyphens: enabled });
+  }
+
+  strictMode(
+    enabled = true,
+    message?: ConditionMessageInput<boolean, void>,
+  ): VUUID {
+    return new VUUID({
+      ...this.cond,
+      strictMode: conditionWithValue<boolean, void>(enabled, message),
+    });
   }
 
   required(): VUUIDNotNull {

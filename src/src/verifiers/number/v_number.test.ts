@@ -55,6 +55,47 @@ describe("VNumber", () => {
       VerificationError,
     );
   });
+
+  it("should support fluent condition methods", () => {
+    const validator = V.Number()
+      .min(2)
+      .max(3)
+      .in([2.5, 3])
+      .notIn([2])
+      .minDecimalPlaces(1)
+      .maxDecimalPlaces(2);
+
+    expect(validator.check(2.5)).toBe(2.5);
+    expect(() => validator.check(1.5)).toThrow(VerificationError);
+  });
+
+  it("should use custom fluent message for min", () => {
+    const validator = V.Number().min(5, {
+      val: 5,
+      message: () => "too small",
+    });
+    expect(() => validator.check(4)).toThrow("too small");
+  });
+
+  it("should support custom messages for all fluent number conditions", () => {
+    expect(() => V.Number().max(2, "max 2").check(3)).toThrow("max 2");
+    expect(() =>
+      V.Number()
+        .in([1, 2], (v) => `permitidos ${v.in.join(",")}`)
+        .check(3),
+    ).toThrow("permitidos 1,2");
+    expect(() => V.Number().notIn([1], "1 bloqueado").check(1)).toThrow(
+      "1 bloqueado",
+    );
+    expect(() =>
+      V.Number()
+        .maxDecimalPlaces(2, (v) => `max ${v.maxDecimalPlaces} decimales`)
+        .check(1.234),
+    ).toThrow("max 2 decimales");
+    expect(() =>
+      V.Number().minDecimalPlaces(2, "min 2 decimales").check(1.2),
+    ).toThrow("min 2 decimales");
+  });
 });
 
 describe("VNumberNotNull", () => {
@@ -108,5 +149,18 @@ describe("VNumberNotNull", () => {
   it("should throw a validation error for invalid type", () => {
     const validator = V.NumberNotNull();
     expect(() => validator.check("string")).toThrow(VerificationError);
+  });
+
+  it("should support fluent condition methods", () => {
+    const validator = V.NumberNotNull()
+      .min(2)
+      .max(3)
+      .in([2.5, 3])
+      .notIn([2])
+      .minDecimalPlaces(1)
+      .maxDecimalPlaces(2);
+
+    expect(validator.check(2.5)).toBe(2.5);
+    expect(() => validator.check(1.5)).toThrow(VerificationError);
   });
 });

@@ -21,6 +21,16 @@ describe("VBoolean - strictMode validation", () => {
     expect(() => validator.check("1")).toThrow(VerificationError);
   });
 
+  it("should use custom strictMode message", () => {
+    const validator = V.Boolean({
+      strictMode: {
+        val: true,
+        message: () => "boolean estricto",
+      },
+    });
+    expect(() => validator.check("1" as any)).toThrow("boolean estricto");
+  });
+
   it("should accept various formats in non-strict mode", () => {
     const validator = V.Boolean();
     expect(validator.check(true)).toBe(true);
@@ -67,5 +77,10 @@ describe("VBooleanNotNull - strictMode validation", () => {
     expect(validator.check(1)).toBe(true);
     expect(validator.check("true")).toBe(true);
     expect(() => validator.check(null)).toThrow(VerificationError);
+  });
+
+  it("should use custom strictMode message with fluent api", () => {
+    const validator = V.BooleanNotNull().strictMode(true, "bool estricto");
+    expect(() => validator.check(1 as any)).toThrow("bool estricto");
   });
 });

@@ -59,6 +59,28 @@ describe("VUUID", () => {
     const uuidV1 = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"; // v1
     expect(() => validator.check(uuidV1)).toThrow(VerificationError);
   });
+
+  it("should support fluent condition methods", () => {
+    const validator = V.UUID().allowNoHyphens().version(4).strictMode();
+    const uuidNoHyphen = "550e8400e29b41d4a716446655440000";
+    expect(validator.check(uuidNoHyphen)).toBe(
+      "550e8400-e29b-41d4-a716-446655440000",
+    );
+  });
+
+  it("should keep strictMode fluent overloads functional", () => {
+    expect(() =>
+      V.UUID()
+        .strictMode(true, "ignored custom message")
+        .check(123 as any),
+    ).toThrow(VerificationError);
+
+    expect(() =>
+      V.UUID()
+        .strictMode(true, () => "ignored callback")
+        .check(123 as any),
+    ).toThrow(VerificationError);
+  });
 });
 
 describe("VUUIDNotNull", () => {
@@ -92,6 +114,14 @@ describe("VUUIDNotNull", () => {
     const validator = V.UUIDNotNull({ version: 4, allowNoHyphens: true });
     const uuidV4 = "550e8400e29b41d4a716446655440000";
     expect(validator.check(uuidV4)).toBe(
+      "550e8400-e29b-41d4-a716-446655440000",
+    );
+  });
+
+  it("should support fluent condition methods", () => {
+    const validator = V.UUIDNotNull().allowNoHyphens().version(4).strictMode();
+    const uuidNoHyphen = "550e8400e29b41d4a716446655440000";
+    expect(validator.check(uuidNoHyphen)).toBe(
       "550e8400-e29b-41d4-a716-446655440000",
     );
   });

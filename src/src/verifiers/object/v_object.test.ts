@@ -53,6 +53,30 @@ describe("VObject", () => {
       validator.check({ name: "John", age: 25, extra: "invalid" }),
     ).toThrow(VerificationError);
   });
+
+  it("should support fluent strictMode method", () => {
+    const validator = V.Object(properties).strictMode();
+    expect(() =>
+      validator.check({ name: "John", age: 25, extra: "invalid" }),
+    ).toThrow(VerificationError);
+  });
+
+  it("should support fluent ignoreCase method", () => {
+    const validator = V.Object(properties).ignoreCase();
+    expect(validator.check({ NAME: "John", AGE: 25 })).toEqual({
+      name: "John",
+      age: 25,
+    });
+  });
+
+  it("should support fluent takeAllValues method", () => {
+    const validator = V.Object(properties).takeAllValues();
+    expect(validator.check({ name: "John", age: 25, role: "admin" })).toEqual({
+      name: "John",
+      age: 25,
+      role: "admin",
+    });
+  });
 });
 
 describe("VObjectNotNull", () => {
@@ -126,5 +150,29 @@ describe("VObjectNotNull", () => {
       true,
     );
     expect((result.__proto__ as Record<string, unknown>).polluted).toBe(true);
+  });
+
+  it("should support fluent strictMode method", () => {
+    const validator = V.ObjectNotNull(properties).strictMode();
+    expect(() =>
+      validator.check({ name: "Jane", age: 30, extra: "invalid" }),
+    ).toThrow(VerificationError);
+  });
+
+  it("should support fluent ignoreCase method", () => {
+    const validator = V.ObjectNotNull(properties).ignoreCase();
+    expect(validator.check({ NAME: "Jane", AGE: 30 })).toEqual({
+      name: "Jane",
+      age: 30,
+    });
+  });
+
+  it("should support fluent takeAllValues method", () => {
+    const validator = V.ObjectNotNull(properties).takeAllValues();
+    expect(validator.check({ name: "Jane", age: 30, role: "admin" })).toEqual({
+      name: "Jane",
+      age: 30,
+      role: "admin",
+    });
   });
 });

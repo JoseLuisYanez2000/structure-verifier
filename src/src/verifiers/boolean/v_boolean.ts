@@ -10,6 +10,10 @@ import {
   getValue,
   IMessageLanguage,
 } from "../../languages/message";
+import {
+  ConditionMessageInput,
+  conditionWithValue,
+} from "../helpers/conditionMessage";
 import { Verifier } from "../verifier";
 
 export interface VBooleanConditions
@@ -22,13 +26,17 @@ const FALSE_VALUES = [false, 0, "0"] as const;
 const BOOLEAN_STRINGS = ["true", "false"] as const;
 
 function throwBooleanError(
-  conds: VBooleanConditions | undefined,
+  condition:
+    | MessageType<boolean, void>
+    | MessageType<void, void>
+    | string
+    | undefined,
   badTypeMessage: IMessageLanguage<void>,
 ): never {
   throw new VerificationError([
     {
       key: "",
-      message: getMessage(conds?.badTypeMessage, undefined, badTypeMessage),
+      message: getMessage(condition, undefined, badTypeMessage),
     },
   ]);
 }
@@ -40,7 +48,10 @@ function vBoolean(
 ): boolean {
   if (getValue(conds?.strictMode) === true) {
     if (typeof data !== "boolean") {
-      throwBooleanError(conds, badTypeMessage);
+      throwBooleanError(
+        conds?.strictMode ?? conds?.badTypeMessage,
+        badTypeMessage,
+      );
     }
 
     return data;
@@ -63,7 +74,7 @@ function vBoolean(
     }
   }
 
-  throwBooleanError(conds, badTypeMessage);
+  throwBooleanError(conds?.badTypeMessage, badTypeMessage);
 }
 
 export class VBooleanNotNull extends Verifier<boolean> {
@@ -74,6 +85,17 @@ export class VBooleanNotNull extends Verifier<boolean> {
       this.cond,
     );
   }
+
+  strictMode(
+    enabled = true,
+    message?: ConditionMessageInput<boolean, void>,
+  ): VBooleanNotNull {
+    return new VBooleanNotNull({
+      ...this.cond,
+      strictMode: conditionWithValue<boolean, void>(enabled, message),
+    });
+  }
+
   constructor(protected cond?: VBooleanConditions) {
     super(cond);
     this.badTypeMessage = {
@@ -91,6 +113,17 @@ export class VBoolean extends Verifier<boolean | null> {
     }
     return vBoolean(val, this.badTypeMessage, this.cond);
   }
+
+  strictMode(
+    enabled = true,
+    message?: ConditionMessageInput<boolean, void>,
+  ): VBoolean {
+    return new VBoolean({
+      ...this.cond,
+      strictMode: conditionWithValue<boolean, void>(enabled, message),
+    });
+  }
+
   constructor(protected cond?: VBooleanConditions) {
     super(cond);
     this.cond = cond;

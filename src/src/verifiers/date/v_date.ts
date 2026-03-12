@@ -11,6 +11,10 @@ import {
   IMessageLanguage,
 } from "../../languages/message";
 import { VerificationError } from "../../error/v_error";
+import {
+  ConditionMessageInput,
+  conditionWithValue,
+} from "../helpers/conditionMessage";
 import { Verifier } from "../verifier";
 import { datetime } from "../../utils/datetime";
 
@@ -190,6 +194,59 @@ export class VDateNotNull extends Verifier<datetime.Dayjs> {
       this.cond,
     );
   }
+
+  format(
+    fmt: string,
+    message?: ConditionMessageInput<string, { format: string }>,
+  ): VDateNotNull {
+    return new VDateNotNull({
+      ...this.cond,
+      format: conditionWithValue<string, { format: string }>(fmt, message),
+    });
+  }
+
+  timeZone(
+    tz: string,
+    message?: ConditionMessageInput<string, { timeZone: string }>,
+  ): VDateNotNull {
+    return new VDateNotNull({
+      ...this.cond,
+      timeZone: conditionWithValue<string, { timeZone: string }>(tz, message),
+    });
+  }
+
+  maxDate(
+    date: datetime.Dayjs,
+    message?: ConditionMessageInput<
+      datetime.Dayjs,
+      { maxDate: datetime.Dayjs }
+    >,
+  ): VDateNotNull {
+    return new VDateNotNull({
+      ...this.cond,
+      maxDate: conditionWithValue<datetime.Dayjs, { maxDate: datetime.Dayjs }>(
+        date,
+        message,
+      ),
+    });
+  }
+
+  minDate(
+    date: datetime.Dayjs,
+    message?: ConditionMessageInput<
+      datetime.Dayjs,
+      { minDate: datetime.Dayjs }
+    >,
+  ): VDateNotNull {
+    return new VDateNotNull({
+      ...this.cond,
+      minDate: conditionWithValue<datetime.Dayjs, { minDate: datetime.Dayjs }>(
+        date,
+        message,
+      ),
+    });
+  }
+
   constructor(protected cond?: VDateConditions) {
     super(cond);
     this.badTypeMessage = dMessages.badTypeMessage;
@@ -204,6 +261,59 @@ export class VDate extends Verifier<datetime.Dayjs | null> {
     }
     return vDate(val, this.badTypeMessage, this.cond);
   }
+
+  format(
+    fmt: string,
+    message?: ConditionMessageInput<string, { format: string }>,
+  ): VDate {
+    return new VDate({
+      ...this.cond,
+      format: conditionWithValue<string, { format: string }>(fmt, message),
+    });
+  }
+
+  timeZone(
+    tz: string,
+    message?: ConditionMessageInput<string, { timeZone: string }>,
+  ): VDate {
+    return new VDate({
+      ...this.cond,
+      timeZone: conditionWithValue<string, { timeZone: string }>(tz, message),
+    });
+  }
+
+  maxDate(
+    date: datetime.Dayjs,
+    message?: ConditionMessageInput<
+      datetime.Dayjs,
+      { maxDate: datetime.Dayjs }
+    >,
+  ): VDate {
+    return new VDate({
+      ...this.cond,
+      maxDate: conditionWithValue<datetime.Dayjs, { maxDate: datetime.Dayjs }>(
+        date,
+        message,
+      ),
+    });
+  }
+
+  minDate(
+    date: datetime.Dayjs,
+    message?: ConditionMessageInput<
+      datetime.Dayjs,
+      { minDate: datetime.Dayjs }
+    >,
+  ): VDate {
+    return new VDate({
+      ...this.cond,
+      minDate: conditionWithValue<datetime.Dayjs, { minDate: datetime.Dayjs }>(
+        date,
+        message,
+      ),
+    });
+  }
+
   constructor(protected cond?: VDateConditions) {
     super(cond);
     this.cond = cond;

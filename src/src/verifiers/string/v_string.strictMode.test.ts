@@ -13,6 +13,16 @@ describe("VString - strictMode validation", () => {
     expect(() => validator.check(42)).toThrow(VerificationError);
   });
 
+  it("should use custom strictMode message", () => {
+    const validator = V.String({
+      strictMode: {
+        val: true,
+        message: () => "string estricto",
+      },
+    });
+    expect(() => validator.check(42 as any)).toThrow("string estricto");
+  });
+
   it("should reject boolean in strict mode", () => {
     const validator = V.String({ strictMode: true });
     expect(() => validator.check(true)).toThrow(VerificationError);
@@ -61,5 +71,10 @@ describe("VStringNotNull - strictMode validation", () => {
     expect(validator.check("hello")).toBe("hello");
     expect(() => validator.check(null)).toThrow(VerificationError);
     expect(() => validator.check(42)).toThrow(VerificationError);
+  });
+
+  it("should use custom strictMode message with fluent api", () => {
+    const validator = V.StringNotNull().strictMode(true, "texto estricto");
+    expect(() => validator.check(42 as any)).toThrow("texto estricto");
   });
 });
