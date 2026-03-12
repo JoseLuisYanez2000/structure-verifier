@@ -14,10 +14,20 @@ try {
       .minLength(5, `el email debe tener al menos 10 caracteres`),
     age: V.Number({})
       .required()
-      .min(18, (v) => `la edad debe ser al menos ${v.min}`)
-      .transform((value) => String(value)),
+      .min(18, (v) => `la edad debe ser al menos ${v.min}`),
     //.transform((value) => Number(value)),
-  }).required();
+  })
+    .required()
+    .transform((value) => {
+      if (value.email === "trdt@") {
+        throw new VerificationError([
+          {
+            message: "email no puede ser trdt@",
+          },
+        ]);
+      }
+      return value;
+    });
   // .transform((value) => ({
   //   email: value.email,
   //   email2: value.email,

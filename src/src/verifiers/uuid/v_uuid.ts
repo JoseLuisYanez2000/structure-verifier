@@ -38,6 +38,8 @@ const UUID_MESSAGES = {
   },
 };
 
+const UUID_REGEX_CACHE = new Map<string, RegExp>();
+
 function throwUUIDError(
   condition: MessageType<any, any> | string | undefined,
   badTypeMessage: IMessageLanguage<void>,
@@ -88,16 +90,24 @@ function ensureUUIDLength(normalizedUuid: string) {
   }
 }
 
-function buildUUIDRegex(version?: VUUIDConditions["version"]) {
+function getUUIDRegex(version?: VUUIDConditions["version"]) {
+  const cacheKey = version === undefined ? "any" : String(version);
+  const cached = UUID_REGEX_CACHE.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const versionPattern = version ?? "[1-5]";
-  return new RegExp(
+  const created = new RegExp(
     `^[0-9a-f]{8}[0-9a-f]{4}${versionPattern}[0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$`,
     "i",
   );
+  UUID_REGEX_CACHE.set(cacheKey, created);
+  return created;
 }
 
 function ensureUUIDVersion(normalizedUuid: string, conds?: VUUIDConditions) {
-  const regex = buildUUIDRegex(conds?.version);
+  const regex = getUUIDRegex(conds?.version);
   if (!regex.test(normalizedUuid)) {
     throw new VerificationError([
       {

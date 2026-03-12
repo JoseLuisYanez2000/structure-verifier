@@ -126,7 +126,6 @@ export class VBoolean extends Verifier<boolean | null> {
 
   constructor(protected cond?: VBooleanConditions) {
     super(cond);
-    this.cond = cond;
     this.badTypeMessage = {
       es: () => `debe ser un booleano`,
       en: () => `must be a boolean`,

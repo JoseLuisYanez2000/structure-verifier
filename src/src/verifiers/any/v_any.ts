@@ -31,7 +31,6 @@ export class VAny extends Verifier<any | null> {
   }
   constructor(protected cond?: VAnyConditions) {
     super(cond);
-    this.cond = cond;
     this.badTypeMessage = dMessages.badTypeMessage;
   }
 }

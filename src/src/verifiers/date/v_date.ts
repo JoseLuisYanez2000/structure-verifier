@@ -316,7 +316,6 @@ export class VDate extends Verifier<datetime.Dayjs | null> {
 
   constructor(protected cond?: VDateConditions) {
     super(cond);
-    this.cond = cond;
     this.badTypeMessage = dMessages.badTypeMessage;
   }
 

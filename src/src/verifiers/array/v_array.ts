@@ -114,6 +114,7 @@ function vArray<T extends Verifier<any>>(
 
   const errors: messageResp[] = [];
   const value: ReturnType<T["check"]>[] = [];
+  const nestedVerifier = isNestedVerifier(verifier);
 
   for (let i = 0; i < data.length; i++) {
     try {
@@ -122,7 +123,7 @@ function vArray<T extends Verifier<any>>(
       if (error instanceof VerificationError) {
         errors.push(
           ...error.errorsObj.map((itemError) => {
-            if (isNestedVerifier(verifier)) {
+            if (nestedVerifier) {
               return {
                 ...itemError,
                 key: prefixArrayErrorKey(i, itemError.key),

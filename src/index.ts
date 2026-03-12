@@ -1,22 +1,40 @@
-import { VAny } from "./src/verifiers/any/v_any";
-import { VAnyConditions } from "./src/verifiers/any/v_any";
-import { VArray, VArrayNotNull } from "./src/verifiers/array/v_array";
-import { VArrayConditions } from "./src/verifiers/array/v_array";
-import { VBoolean, VBooleanNotNull } from "./src/verifiers/boolean/v_boolean";
-import { VBooleanConditions } from "./src/verifiers/boolean/v_boolean";
-import { VDate, VDateNotNull } from "./src/verifiers/date/v_date";
-import { VDateConditions } from "./src/verifiers/date/v_date";
-import { VNumber, VNumberNotNull } from "./src/verifiers/number/v_number";
-import { VNumberConditions } from "./src/verifiers/number/v_number";
-import { VObject, VObjectNotNull } from "./src/verifiers/object/v_object";
+import { VAny, type VAnyConditions } from "./src/verifiers/any/v_any";
 import {
-  VObjectConditions,
-  VObjectConditionsNotNull,
+  VArray,
+  VArrayNotNull,
+  type VArrayConditions,
+} from "./src/verifiers/array/v_array";
+import {
+  VBoolean,
+  VBooleanNotNull,
+  type VBooleanConditions,
+} from "./src/verifiers/boolean/v_boolean";
+import {
+  VDate,
+  VDateNotNull,
+  type VDateConditions,
+} from "./src/verifiers/date/v_date";
+import {
+  VNumber,
+  VNumberNotNull,
+  type VNumberConditions,
+} from "./src/verifiers/number/v_number";
+import {
+  VObject,
+  VObjectNotNull,
+  type VObjectConditions,
+  type VObjectConditionsNotNull,
 } from "./src/verifiers/object/v_object";
-import { VString, VStringNotNull } from "./src/verifiers/string/v_string";
-import { VStringConditions } from "./src/verifiers/string/v_string";
-import { VUUID, VUUIDNotNull } from "./src/verifiers/uuid/v_uuid";
-import { VUUIDConditions } from "./src/verifiers/uuid/v_uuid";
+import {
+  VString,
+  VStringNotNull,
+  type VStringConditions,
+} from "./src/verifiers/string/v_string";
+import {
+  VUUID,
+  VUUIDNotNull,
+  type VUUIDConditions,
+} from "./src/verifiers/uuid/v_uuid";
 import { Verifier } from "./src/verifiers/verifier";
 
 export { VerificationError } from "./src/error/v_error";

@@ -313,7 +313,6 @@ export class VNumber extends Verifier<number | null> {
 
   constructor(protected cond?: VNumberConditions) {
     super(cond);
-    this.cond = cond;
     this.badTypeMessage = dMessages.badTypeMessage;
   }
 

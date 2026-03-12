@@ -79,8 +79,16 @@ function throwStringError<T>(
   ]);
 }
 
-function normalizeStrings(values: string[]) {
-  return values.map((value) => value.toLowerCase());
+function includesComparable(
+  values: string[],
+  value: string,
+  ignoreCase: boolean,
+) {
+  if (!ignoreCase) {
+    return values.includes(value);
+  }
+
+  return values.some((item) => item.toLowerCase() === value);
 }
 
 function vString(
@@ -130,22 +138,14 @@ function vString(
 
   if (conds?.in !== undefined) {
     const allowedValues = getValue(conds.in);
-    const comparableValues = ignoreCase
-      ? normalizeStrings(allowedValues)
-      : allowedValues;
-
-    if (!comparableValues.includes(comparableValue)) {
+    if (!includesComparable(allowedValues, comparableValue, ignoreCase)) {
       throwStringError(conds.in, { in: allowedValues }, dMessages.in);
     }
   }
 
   if (conds?.notIn !== undefined) {
     const blockedValues = getValue(conds.notIn);
-    const comparableValues = ignoreCase
-      ? normalizeStrings(blockedValues)
-      : blockedValues;
-
-    if (comparableValues.includes(comparableValue)) {
+    if (includesComparable(blockedValues, comparableValue, ignoreCase)) {
       throwStringError(conds.notIn, { notIn: blockedValues }, dMessages.notIn);
     }
   }

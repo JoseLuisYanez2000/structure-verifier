@@ -1,11 +1,11 @@
 import { messageResp } from "../interfaces/types";
 
 function normalizeMessage(message: messageResp): Readonly<messageResp> {
-  return Object.freeze({
+  return {
     ...message,
     key: typeof message.key === "string" ? message.key.trim() : message.key,
     message: message.message.trim(),
-  });
+  };
 }
 
 function formatMessage(message: messageResp): string {
@@ -21,10 +21,11 @@ export class VerificationError extends Error {
 
   constructor(messages: readonly messageResp[]) {
     const normalizedMessages = messages.map(normalizeMessage);
+    const formattedMessages = normalizedMessages.map(formatMessage);
 
-    super(normalizedMessages.map(formatMessage).join(";"));
+    super(formattedMessages.join(";"));
     this.name = "VerificationError";
-    this._errors = Object.freeze(normalizedMessages.map(formatMessage));
+    this._errors = Object.freeze(formattedMessages);
     this._errorsObj = Object.freeze(normalizedMessages);
   }
 
