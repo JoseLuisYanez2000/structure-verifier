@@ -153,6 +153,41 @@ export class VStringNotNull extends Verifier<string> {
       this.cond,
     );
   }
+
+  trim(): Verifier<string> {
+    return this.transform((value) => value.trim());
+  }
+
+  trimStart(): Verifier<string> {
+    return this.transform((value) => value.trimStart());
+  }
+
+  trimEnd(): Verifier<string> {
+    return this.transform((value) => value.trimEnd());
+  }
+
+  toLowerCase(): Verifier<string> {
+    return this.transform((value) => value.toLowerCase());
+  }
+
+  toUpperCase(): Verifier<string> {
+    return this.transform((value) => value.toUpperCase());
+  }
+
+  removeAccents(): Verifier<string> {
+    return this.transform((value) =>
+      value.normalize("NFD").replace(/\p{M}/gu, ""),
+    );
+  }
+
+  padStart(maxLength: number, fillString?: string): Verifier<string> {
+    return this.transform((value) => value.padStart(maxLength, fillString));
+  }
+
+  padEnd(maxLength: number, fillString?: string): Verifier<string> {
+    return this.transform((value) => value.padEnd(maxLength, fillString));
+  }
+
   constructor(protected cond?: VStringConditions) {
     super(cond);
     this.badTypeMessage = {
@@ -170,6 +205,51 @@ export class VString extends Verifier<string | null> {
     }
     return vString(val, this.badTypeMessage, this.cond);
   }
+
+  trim(): Verifier<string | null> {
+    return this.transform((value) => (value === null ? null : value.trim()));
+  }
+
+  trimStart(): Verifier<string | null> {
+    return this.transform((value) =>
+      value === null ? null : value.trimStart(),
+    );
+  }
+
+  trimEnd(): Verifier<string | null> {
+    return this.transform((value) => (value === null ? null : value.trimEnd()));
+  }
+
+  toLowerCase(): Verifier<string | null> {
+    return this.transform((value) =>
+      value === null ? null : value.toLowerCase(),
+    );
+  }
+
+  toUpperCase(): Verifier<string | null> {
+    return this.transform((value) =>
+      value === null ? null : value.toUpperCase(),
+    );
+  }
+
+  removeAccents(): Verifier<string | null> {
+    return this.transform((value) =>
+      value === null ? null : value.normalize("NFD").replace(/\p{M}/gu, ""),
+    );
+  }
+
+  padStart(maxLength: number, fillString?: string): Verifier<string | null> {
+    return this.transform((value) =>
+      value === null ? null : value.padStart(maxLength, fillString),
+    );
+  }
+
+  padEnd(maxLength: number, fillString?: string): Verifier<string | null> {
+    return this.transform((value) =>
+      value === null ? null : value.padEnd(maxLength, fillString),
+    );
+  }
+
   constructor(protected cond?: VStringConditions) {
     super(cond);
     this.badTypeMessage = {

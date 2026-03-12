@@ -6,8 +6,15 @@ VerifierConfig.lang = "es";
 
 try {
   const verifier = V.Object({
-    email: V.String().required(),
-  }).required();
+    email: V.String()
+      .required()
+      .transform((value) => Number(value)),
+  })
+    .required()
+    .transform((value) => ({
+      email: value.email,
+      email2: value.email,
+    }));
 
   const a = verifier.check({
     email: "trdt@",

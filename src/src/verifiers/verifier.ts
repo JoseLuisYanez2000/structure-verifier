@@ -12,6 +12,17 @@ export abstract class Verifier<T> {
   constructor(protected cond?: VVCIsRequired) {}
   abstract check(data: any): T;
   protected badTypeMessage: IMessageLanguage<void>;
+
+  transform<R>(mapper: (value: T) => R): Verifier<R> {
+    const baseVerifier = this;
+
+    return new (class extends Verifier<R> {
+      check(data: any): R {
+        return mapper(baseVerifier.check(data));
+      }
+    })();
+  }
+
   protected isRequired(data: any, isRequired?: boolean, defaultValue?: T): T {
     let mReq: IMessageLanguage<void> = {
       es: () => "es requerido y",
