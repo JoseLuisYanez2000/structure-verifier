@@ -2,32 +2,33 @@
 
 Libreria de validacion para TypeScript orientada a esquemas declarativos, tipado inferido y errores detallados por ruta.
 
-Ideal para validar payloads de API, formularios, configuraciones y estructuras anidadas complejas.
+Ideal para validar payloads de API, formularios, configuraciones y estructuras anidadas.
 
-Version actual: 0.0.17
+## Objetivo de esta documentacion
 
-## Contenido
+Este README está diseñado para ayudarte a:
 
-- Caracteristicas
-- Instalacion
-- Inicio rapido
-- Conceptos base
-- API publica
-- Referencia completa de validadores
-- Transformaciones de valores
-- Tipado inferido
-- Manejo de errores
-- Ejemplos avanzados
-- Scripts de desarrollo
+- Comprender rápidamente cómo funciona la librería.
+- Integrarla de forma sencilla en un proyecto real.
+- Conocer el contrato público de la API antes de utilizarla en producción.
+- Explorar ejemplos prácticos de validación y tipado.
+- Entender las decisiones de diseño y el enfoque de la librería.
 
-## Caracteristicas
+## Tabla de contenido
 
-- Validadores para number, string, boolean, uuid, date, array, object y any.
-- Soporte para estructuras anidadas con errores por ruta.
-- API fluida por clases y API de fabrica mediante Verifiers.
-- Tipado inferido en compile-time para mantener consistencia del dominio.
-- Personalizacion de mensajes por regla y por validador.
-- Integracion con dayjs (exportado como datetime) para manejo de fechas.
+- [Instalacion](#instalacion)
+- [Inicio rapido](#inicio-rapido)
+- [Conceptos clave](#conceptos-clave)
+- [API publica](#api-publica)
+- [Estilos de uso](#estilos-de-uso)
+- [Validadores disponibles](#validadores-disponibles)
+- [Transformaciones](#transformaciones)
+- [Tipado inferido](#tipado-inferido)
+- [Manejo de errores](#manejo-de-errores)
+- [datetime (dayjs)](#datetime-dayjs)
+- [Buenas practicas para v1.0.0](#buenas-practicas-para-v100)
+- [Scripts de desarrollo](#scripts-de-desarrollo)
+- [Licencia](#licencia)
 
 ## Instalacion
 
@@ -42,11 +43,11 @@ import { Verifiers as V, VerificationError } from "structure-verifier";
 
 const userVerifier = V.ObjectNotNull(
   {
-    id: V.UUIDNotNull({ version: 4 }),
-    name: V.StringNotNull({ minLength: 2 }),
+    id: V.UUID({ version: 4 }).required(),
+    name: V.StringNotNull({ minLength: 2 }).trim(),
     age: V.Number({ min: 0 }),
     active: V.BooleanNotNull(),
-    tags: V.ArrayNotNull(V.StringNotNull()).minLength(1),
+    tags: V.ArrayNotNull(V.StringNotNull(), { minLength: 1 }),
   },
   {
     strictMode: true,
@@ -56,48 +57,64 @@ const userVerifier = V.ObjectNotNull(
 try {
   const user = userVerifier.check({
     id: "550e8400-e29b-41d4-a716-446655440000",
-    name: "Ana",
+    name: "  Ana  ",
     age: "31",
     active: "true",
     tags: ["admin"],
   });
 
   console.log(user);
+  // {
+  //   id: "550e8400-e29b-41d4-a716-446655440000",
+  //   name: "Ana",
+  //   age: 31,
+  //   active: true,
+  //   tags: ["admin"]
+  // }
 } catch (error) {
   if (error instanceof VerificationError) {
-    console.log(error.message);
-    console.log(error.errors);
-    console.log(error.errorsObj);
+    console.error(error.message);
+    console.error(error.errors);
+    console.error(error.errorsObj);
   }
 }
 ```
 
-## Conceptos base
+## Conceptos clave
 
 ### 1) Nullable vs NotNull
 
-- VNumber, VString, VBoolean, VDate, VUUID, VArray y VObject retornan tipo nullable.
-- Sus versiones NotNull retornan el tipo requerido.
-- Tambien puedes promover un validador nullable a requerido con required().
+- `VNumber`, `VString`, `VBoolean`, `VDate`, `VUUID`, `VArray`, `VObject` y `VAny` pueden devolver `null`.
+- Las variantes `NotNull` devuelven siempre tipo requerido.
+- En validadores nullable puedes promover a requerido con `.required()`.
 
-### 2) Reglas comunes
+### 2) Inmutabilidad de reglas
+
+Cada metodo de regla devuelve una nueva instancia del validador.
+
+```ts
+const base = V.StringNotNull();
+const withMin = base.minLength(3);
+
+// base no cambia
+```
+
+### 3) Reglas transversales
 
 Muchos validadores comparten estas opciones:
 
-- isRequired: fuerza que el valor exista.
-- emptyAsNull: transforma string vacio a null antes de validar.
-- defaultValue: valor por defecto para undefined y, en algunos casos, null.
-- badTypeMessage: reemplaza el mensaje de tipo invalido.
+- `isRequired`: fuerza existencia del valor.
+- `emptyAsNull`: transforma `""` a `null` antes de validar.
+- `defaultValue`: valor por defecto para `undefined` y ciertos casos de `null`.
+- `badTypeMessage`: reemplaza mensaje de tipo invalido.
 
-### 3) Mensajes personalizados
+### 4) Mensajes personalizados
 
-Las reglas aceptan mensajes de estas formas:
+Puedes pasar mensajes como:
 
-- String fijo.
-- Funcion callback con el objeto de valores de la regla.
-- Objeto con estructura val + message.
-
-Ejemplo:
+- `string` fijo.
+- callback usando el valor de la regla.
+- objeto `{ val, message }`.
 
 ```ts
 const age = V.NumberNotNull().min(18, (v) => `Edad minima: ${v.min}`);
@@ -105,7 +122,13 @@ const age = V.NumberNotNull().min(18, (v) => `Edad minima: ${v.min}`);
 
 ## API publica
 
-Import principal:
+Import principal recomendado:
+
+```ts
+import { Verifiers as V } from "structure-verifier";
+```
+
+Import completo disponible:
 
 ```ts
 import {
@@ -133,17 +156,17 @@ import {
 } from "structure-verifier";
 ```
 
-Tambien se exportan los tipos de condiciones:
+Tambien se exportan estos tipos de condiciones:
 
-- VAnyConditions
-- VArrayConditions
-- VBooleanConditions
-- VDateConditions
-- VNumberConditions
-- VObjectConditions
-- VObjectConditionsNotNull
-- VStringConditions
-- VUUIDConditions
+- `VAnyConditions`
+- `VArrayConditions`
+- `VBooleanConditions`
+- `VDateConditions`
+- `VNumberConditions`
+- `VObjectConditions`
+- `VObjectConditionsNotNull`
+- `VStringConditions`
+- `VUUIDConditions`
 
 ## Estilos de uso
 
@@ -163,281 +186,186 @@ import { VStringNotNull } from "structure-verifier";
 const nameV = new VStringNotNull({ minLength: 3 });
 ```
 
-### Callable constructors
+### Callable constructors en `Verifiers`
 
-En Verifiers puedes usar los miembros como funcion o con new.
+Los miembros de `Verifiers` aceptan llamada normal o `new`.
 
 ```ts
 const a = V.NumberNotNull({ min: 1 });
 const b = new V.NumberNotNull({ min: 1 });
 ```
 
-## Referencia completa de validadores
+## Validadores disponibles
 
-### Number y NumberNotNull
+### Number / NumberNotNull
 
-Retorno:
+Salida:
 
-- VNumber: number | null
-- VNumberNotNull: number
+- `VNumber`: `number | null`
+- `VNumberNotNull`: `number`
 
-Condiciones:
+Reglas:
 
-- min
-- max
-- in
-- notIn
-- maxDecimalPlaces
-- minDecimalPlaces
-- isRequired
-- emptyAsNull
-- defaultValue
-- badTypeMessage
+- `min`
+- `max`
+- `in`
+- `notIn`
+- `maxDecimalPlaces`
+- `minDecimalPlaces`
+- reglas transversales (`isRequired`, `emptyAsNull`, `defaultValue`, `badTypeMessage`)
 
-Comportamiento clave:
+Comportamiento importante:
 
-- Convierte el valor usando Number(data).
-- Rechaza string vacio y NaN.
+- Convierte con `Number(data)`.
+- Rechaza `""` y valores `NaN`.
 
-Ejemplo:
+### String / StringNotNull
 
-```ts
-const priceV = V.NumberNotNull().min(0).maxDecimalPlaces(2);
-const price = priceV.check("25.99");
-```
+Salida:
 
-### String y StringNotNull
+- `VString`: `string | null`
+- `VStringNotNull`: `string`
 
-Retorno:
+Reglas:
 
-- VString: string | null
-- VStringNotNull: string
+- `minLength`
+- `maxLength`
+- `regex`
+- `notRegex`
+- `in`
+- `notIn`
+- `strictMode`
+- `ignoreCase`
+- reglas transversales
 
-Condiciones:
+Comportamiento importante:
 
-- minLength
-- maxLength
-- regex
-- notRegex
-- in
-- notIn
-- strictMode
-- ignoreCase
-- isRequired
-- emptyAsNull
-- defaultValue
-- badTypeMessage
+- En modo normal convierte con `String(data)`.
+- En `strictMode` exige tipo string real.
+- `ignoreCase` aplica a reglas `in` y `notIn`.
 
-Comportamiento clave:
+### Boolean / BooleanNotNull
 
-- En modo normal convierte con String(data).
-- En strictMode exige string real.
-- ignoreCase afecta in y notIn.
+Salida:
 
-Ejemplo:
+- `VBoolean`: `boolean | null`
+- `VBooleanNotNull`: `boolean`
 
-```ts
-const roleV = V.StringNotNull()
-  .ignoreCase()
-  .in(["admin", "user", "guest"])
-  .trim()
-  .toLowerCase();
+Reglas:
 
-const role = roleV.check(" ADMIN ");
-```
+- `strictMode`
+- reglas transversales
 
-### Boolean y BooleanNotNull
+Comportamiento importante:
 
-Retorno:
+- Modo normal acepta: `true`, `false`, `1`, `0`, `"1"`, `"0"`, `"true"`, `"false"`.
+- `strictMode` acepta solo boolean real.
 
-- VBoolean: boolean | null
-- VBooleanNotNull: boolean
+### UUID / UUIDNotNull
 
-Condiciones:
+Salida:
 
-- strictMode
-- isRequired
-- emptyAsNull
-- defaultValue
-- badTypeMessage
+- `VUUID`: `string | null`
+- `VUUIDNotNull`: `string`
 
-Comportamiento clave:
+Reglas:
 
-- En modo normal acepta: true, false, 1, 0, "1", "0", "true", "false".
-- En strictMode solo acepta boolean.
+- `version` (`1 | 2 | 3 | 4 | 5`)
+- `allowNoHyphens`
+- `strictMode`
+- reglas transversales
 
-Ejemplo:
+Comportamiento importante:
 
-```ts
-const active = V.BooleanNotNull().check("true");
-const strictActive = V.BooleanNotNull().strictMode().check(true);
-```
+- Normaliza salida a minusculas con formato `8-4-4-4-12`.
+- Si `allowNoHyphens` es `false`, exige UUID con guiones.
 
-### UUID y UUIDNotNull
+### Date / DateNotNull
 
-Retorno:
+Salida:
 
-- VUUID: string | null
-- VUUIDNotNull: string
+- `VDate`: `datetime.Dayjs | null`
+- `VDateNotNull`: `datetime.Dayjs`
 
-Condiciones:
+Reglas:
 
-- version (1 | 2 | 3 | 4 | 5)
-- allowNoHyphens
-- strictMode
-- isRequired
-- emptyAsNull
-- defaultValue
-- badTypeMessage
+- `format`
+- `timeZone`
+- `maxDate`
+- `minDate`
+- reglas transversales
 
-Comportamiento clave:
+Comportamiento importante:
 
-- Normaliza salida a minusculas y formato con guiones.
-- Si allowNoHyphens no esta activo, exige formato 8-4-4-4-12.
+- Soporta entrada `number`, `string`, `Date` y `datetime.Dayjs`.
+- Si no defines `timeZone`, usa `UTC`.
+- Si el `format` no incluye zona horaria, aplica la zona configurada.
 
-Ejemplo:
+### Array / ArrayNotNull
 
-```ts
-const uuidV = V.UUIDNotNull().version(4);
-const id = uuidV.check("550E8400E29B41D4A716446655440000");
-```
+Salida:
 
-### Date y DateNotNull
+- `VArray`: `ReturnType<T["check"]>[] | null`
+- `VArrayNotNull`: `ReturnType<T["check"]>[]`
 
-Retorno:
+Reglas:
 
-- VDate: datetime.Dayjs | null
-- VDateNotNull: datetime.Dayjs
+- `minLength`
+- `maxLength`
+- reglas transversales
 
-Condiciones:
-
-- format
-- timeZone
-- maxDate
-- minDate
-- isRequired
-- emptyAsNull
-- defaultValue
-- badTypeMessage
-
-Comportamiento clave:
-
-- Entradas soportadas: number, string, Date y datetime.Dayjs.
-- Si no defines timeZone usa UTC por defecto.
-- Si format no incluye zona horaria, se aplica la zona configurada.
-
-Ejemplo:
-
-```ts
-import { Verifiers as V, datetime } from "structure-verifier";
-
-const dateV = V.DateNotNull()
-  .format("YYYY-MM-DD")
-  .timeZone("America/Mexico_City")
-  .minDate(datetime("2024-01-01"));
-
-const d = dateV.check("2025-05-10");
-```
-
-### Array y ArrayNotNull
-
-Firma:
-
-```ts
-const tagsV = V.Array(V.StringNotNull(), { minLength: 1 });
-const tagsRequiredV = V.ArrayNotNull(V.StringNotNull(), { minLength: 1 });
-```
-
-Retorno:
-
-- VArray: ReturnType<T["check"]>[] | null
-- VArrayNotNull: ReturnType<T["check"]>[]
-
-Condiciones:
-
-- minLength
-- maxLength
-- isRequired
-- emptyAsNull
-- defaultValue
-- badTypeMessage
-
-Comportamiento clave:
+Comportamiento importante:
 
 - Valida item por item con el verificador interno.
-- En errores anidados agrega rutas como [0], [1].name.
+- En errores anidados agrega rutas como `[0]`, `[1].name`, etc.
 
-### Object y ObjectNotNull
+### Object / ObjectNotNull
 
-Firma:
+Salida:
 
-```ts
-const userV = V.Object(
-  {
-    name: V.StringNotNull(),
-    age: V.Number(),
-  },
-  {
-    strictMode: true,
-    ignoreCase: false,
-    takeAllValues: false,
-  },
-);
-```
+- `VObject`: objeto tipado o `null`
+- `VObjectNotNull`: objeto tipado
 
-Retorno:
+Reglas:
 
-- VObject: objeto tipado | null
-- VObjectNotNull: objeto tipado
+- `invalidPropertyMessage`
+- `strictMode`
+- `ignoreCase`
+- `takeAllValues`
+- `conds`
+- reglas transversales
 
-Condiciones:
+Comportamiento importante:
 
-- invalidPropertyMessage
-- strictMode
-- ignoreCase
-- takeAllValues
-- conds
-- isRequired
-- emptyAsNull
-- defaultValue
-- badTypeMessage
-
-Comportamiento clave:
-
-- strictMode rechaza propiedades no declaradas.
-- ignoreCase permite mapear llaves sin distinguir mayusculas.
-- takeAllValues conserva propiedades extra en la salida.
-- conds ejecuta una validacion final con el objeto ya validado.
+- `strictMode`: rechaza propiedades no declaradas.
+- `ignoreCase`: permite mapear llaves sin distinguir mayusculas/minusculas.
+- `takeAllValues`: conserva propiedades extra en la salida.
+- `conds`: ejecuta validacion de negocio final sobre el objeto ya validado.
 
 ### Any
 
-Retorno:
+Salida:
 
-- VAny: any | null
+- `VAny`: `any | null`
 
-Condiciones:
+Reglas:
 
-- isRequired
-- emptyAsNull
-- defaultValue
-- badTypeMessage
+- reglas transversales
 
-## Transformaciones de valores
+## Transformaciones
 
-La clase base Verifier incluye transform(mapper), que permite postprocesar la salida validada sin perder la validacion previa.
+La clase base `Verifier` incluye `transform(mapper)` para postprocesar salida validada.
 
-String y StringNotNull incluyen helpers listos:
+`VString` y `VStringNotNull` incluyen helpers:
 
-- trim
-- trimStart
-- trimEnd
-- toLowerCase
-- toUpperCase
-- removeAccents
-- padStart
-- padEnd
-
-Ejemplo:
+- `trim`
+- `trimStart`
+- `trimEnd`
+- `toLowerCase`
+- `toUpperCase`
+- `removeAccents`
+- `padStart`
+- `padEnd`
 
 ```ts
 const usernameV = V.StringNotNull({ minLength: 3 })
@@ -475,39 +403,53 @@ type NumberRequired = InferFactoryType<typeof V.NumberNotNull>;
 
 ## Manejo de errores
 
-Cuando una validacion falla se lanza VerificationError.
+Cuando una validacion falla se lanza `VerificationError`.
 
-Propiedades principales:
+Campos principales:
 
-- message: todos los errores concatenados por punto y coma.
-- errors: arreglo de mensajes planos.
-- errorsObj: arreglo de objetos con key, message y metadatos.
+- `message`: string unico con errores concatenados por `;`.
+- `errors`: arreglo de mensajes planos.
+- `errorsObj`: arreglo con `key`, `message` y metadatos.
 
 Ejemplo:
 
 ```ts
+import { Verifiers as V, VerificationError } from "structure-verifier";
+
 try {
-  V.ObjectNotNull({
-    name: V.StringNotNull({ minLength: 3 }),
-    tags: V.ArrayNotNull(V.StringNotNull(), { minLength: 1 }),
-  }).check({ name: "Al", tags: [] });
+  V.ObjectNotNull(
+    {
+      name: V.StringNotNull({ minLength: 3 }),
+      tags: V.ArrayNotNull(V.StringNotNull(), { minLength: 1 }),
+    },
+    { strictMode: true },
+  ).check({ name: "Al", tags: [], extra: true });
 } catch (error) {
   if (error instanceof VerificationError) {
+    console.log(error.message);
     console.log(error.errors);
     console.log(error.errorsObj);
   }
 }
 ```
 
+Posible salida en `errorsObj`:
+
+```ts
+[
+  { key: "name", message: "debe tener una longitud minima de 3" },
+  { key: "tags", message: "debe tener al menos 1 elementos" },
+  { key: "extra", message: "no es una propiedad valida" },
+];
+```
+
 ## datetime (dayjs)
 
-La libreria exporta dayjs como datetime con plugins activados:
+La libreria exporta `dayjs` como `datetime` con plugins habilitados:
 
-- utc
-- timezone
-- customParseFormat
-
-Ejemplo:
+- `utc`
+- `timezone`
+- `customParseFormat`
 
 ```ts
 import { datetime } from "structure-verifier";
@@ -517,53 +459,14 @@ const utc = now.tz("UTC").format();
 console.log(utc);
 ```
 
-## Ejemplos avanzados
+## Buenas practicas para v1.0.0
 
-### Validacion de payload API
-
-```ts
-const createOrderV = V.ObjectNotNull(
-  {
-    customerId: V.UUIDNotNull({ version: 4 }),
-    items: V.ArrayNotNull(
-      V.ObjectNotNull({
-        sku: V.StringNotNull({ minLength: 1 }),
-        quantity: V.NumberNotNull({ min: 1 }),
-      }),
-      { minLength: 1 },
-    ),
-    createdAt: V.DateNotNull().timeZone("UTC"),
-  },
-  {
-    strictMode: true,
-  },
-);
-```
-
-### conds para reglas de negocio
-
-```ts
-const personV = V.ObjectNotNull(
-  {
-    age: V.NumberNotNull({ min: 0 }),
-    hasParentalConsent: V.Boolean(),
-  },
-  {
-    conds: (value) => {
-      if (value.age < 18 && value.hasParentalConsent !== true) {
-        throw new Error("Parental consent is required for minors");
-      }
-    },
-  },
-);
-```
-
-## Scripts de desarrollo
-
-```bash
-npm test
-npm run dev
-```
+- Define siempre `strictMode: true` en payloads de entrada externa.
+- Usa variantes `NotNull` en campos de negocio obligatorios.
+- Agrega reglas semanticas con `conds` para validaciones cruzadas.
+- Encadena normalizaciones (`trim`, `toLowerCase`, etc.) para salida consistente.
+- Centraliza mensajes custom cuando quieras UX de errores uniforme.
+- Cubre cada esquema critico con pruebas de casos validos e invalidos.
 
 ## Licencia
 

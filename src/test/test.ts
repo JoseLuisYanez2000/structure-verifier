@@ -5,7 +5,30 @@ import { Verifiers as V } from "../index";
 VerifierConfig.lang = "es";
 
 try {
+  const userVerifier = V.ObjectNotNull(
+    {
+      id: V.UUID({ version: 4 }).required(),
+      name: V.StringNotNull({ minLength: 2 }).trim(),
+      age: V.Number({ min: 0 }),
+      active: V.BooleanNotNull(),
+      tags: V.ArrayNotNull(V.StringNotNull(), { minLength: 1 }),
+    },
+    {
+      strictMode: true,
+    },
+  );
+
+  const b = userVerifier.check({
+    id: "550e8400-e29b-41d4-a716-446655440000",
+    name: "John Doe",
+    age: 30,
+    active: true,
+    tags: ["admin", "user"],
+  });
+  console.log(b);
+
   const verifier = V.Object({
+    id: V.UUID({ version: 4 }).required(),
     scopes: V.Array(V.String().required())
       .required()
       .minLength(1, (v) => `debe tener al menos ${v.minLength} elementos`),
