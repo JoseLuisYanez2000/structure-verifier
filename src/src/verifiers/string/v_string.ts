@@ -16,6 +16,17 @@ import {
 } from "../helpers/conditionMessage";
 import { Verifier } from "../verifier";
 
+/**
+ * Configuracion aceptada por los verificadores de string.
+ * @property minLength Longitud minima del texto.
+ * @property maxLength Longitud maxima del texto.
+ * @property regex Patron que debe cumplir el texto.
+ * @property notRegex Patron que NO debe cumplir el texto.
+ * @property in Lista de valores permitidos.
+ * @property notIn Lista de valores prohibidos.
+ * @property strictMode Si es true, solo acepta valores que ya sean string.
+ * @property ignoreCase Habilita comparaciones insensibles a mayusculas/minusculas en `in`/`notIn`.
+ */
 export interface VStringConditions
   extends VBadTypeMessage, VDefaultValue<string>, VVCIsRequired {
   minLength?: MessageType<number, { minLength: number }>;
@@ -66,6 +77,12 @@ const dMessages = {
   },
 };
 
+/**
+ * Lanza `VerificationError` para condiciones fallidas del verificador de string.
+ * @param condition Condicion con mensaje personalizado.
+ * @param values Parametros para la funcion de mensaje.
+ * @param fallbackMessage Mensaje por defecto multilenguaje.
+ */
 function throwStringError<T>(
   condition: MessageType<T, any> | string | undefined,
   values: any,
@@ -79,6 +96,12 @@ function throwStringError<T>(
   ]);
 }
 
+/**
+ * Determina si una lista contiene el valor dado, opcionalmente ignorando mayusculas.
+ * @param values Lista de cadenas donde buscar.
+ * @param value Valor a buscar (ya normalizado a minusculas cuando `ignoreCase` es true).
+ * @param ignoreCase Habilita la comparacion case-insensitive.
+ */
 function includesComparable(
   values: string[],
   value: string,
@@ -91,6 +114,13 @@ function includesComparable(
   return values.some((item) => item.toLowerCase() === value);
 }
 
+/**
+ * Convierte el dato a string y valida todas las condiciones configuradas.
+ * @param data Dato a verificar.
+ * @param badTypeMessage Mensaje por defecto para tipo invalido.
+ * @param conds Configuracion de la verificacion.
+ * @returns Valor string resultante.
+ */
 function vString(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
@@ -153,7 +183,22 @@ function vString(
   return stringValue;
 }
 
+/**
+ * Verificador de string que NO acepta null/undefined (siempre requerido).
+ * Provee metodos encadenables para longitud, regex, listas blancas/negras,
+ * modo estricto e insensible a mayusculas, ademas de transformaciones de texto.
+ *
+ * @example
+ * ```ts
+ * Verifiers.StringNotNull().minLength(3).trim().toLowerCase().check(" HOLA "); // "hola"
+ * ```
+ */
 export class VStringNotNull extends Verifier<string> {
+  /**
+   * Verifica y convierte el dato a string. Lanza si es null/undefined.
+   * @param data Dato a verificar.
+   * @returns String resultante.
+   */
   check(data: any): string {
     return vString(
       this.isRequired(data, true, this.cond?.defaultValue),
@@ -162,6 +207,11 @@ export class VStringNotNull extends Verifier<string> {
     );
   }
 
+  /**
+   * Define la longitud minima.
+   * @param n Longitud minima permitida.
+   * @param message Mensaje personalizado (opcional).
+   */
   minLength(
     n: number,
     message?: ConditionMessageInput<number, { minLength: number }>,
@@ -172,6 +222,11 @@ export class VStringNotNull extends Verifier<string> {
     });
   }
 
+  /**
+   * Define la longitud maxima.
+   * @param n Longitud maxima permitida.
+   * @param message Mensaje personalizado (opcional).
+   */
   maxLength(
     n: number,
     message?: ConditionMessageInput<number, { maxLength: number }>,
@@ -182,6 +237,11 @@ export class VStringNotNull extends Verifier<string> {
     });
   }
 
+  /**
+   * Exige que el texto cumpla con el patron dado.
+   * @param pattern Expresion regular a cumplir.
+   * @param message Mensaje personalizado (opcional).
+   */
   regex(
     pattern: RegExp,
     message?: ConditionMessageInput<RegExp, { regex: RegExp }>,
@@ -192,6 +252,11 @@ export class VStringNotNull extends Verifier<string> {
     });
   }
 
+  /**
+   * Exige que el texto NO cumpla con el patron dado.
+   * @param pattern Expresion regular prohibida.
+   * @param message Mensaje personalizado (opcional).
+   */
   notRegex(
     pattern: RegExp,
     message?: ConditionMessageInput<RegExp, { notRegex: RegExp }>,
@@ -205,6 +270,11 @@ export class VStringNotNull extends Verifier<string> {
     });
   }
 
+  /**
+   * Restringe los valores validos a la lista indicada.
+   * @param values Lista blanca de cadenas permitidas.
+   * @param message Mensaje personalizado (opcional).
+   */
   in(
     values: string[],
     message?: ConditionMessageInput<string[], { in: string[] }>,
@@ -215,6 +285,11 @@ export class VStringNotNull extends Verifier<string> {
     });
   }
 
+  /**
+   * Lista negra de valores prohibidos.
+   * @param values Lista de cadenas no permitidas.
+   * @param message Mensaje personalizado (opcional).
+   */
   notIn(
     values: string[],
     message?: ConditionMessageInput<string[], { notIn: string[] }>,
@@ -225,6 +300,11 @@ export class VStringNotNull extends Verifier<string> {
     });
   }
 
+  /**
+   * Habilita el modo estricto (no convierte numeros u objetos a string).
+   * @param enabled Estado (default true).
+   * @param message Mensaje personalizado (opcional).
+   */
   strictMode(
     enabled = true,
     message?: ConditionMessageInput<boolean, void>,
@@ -235,6 +315,11 @@ export class VStringNotNull extends Verifier<string> {
     });
   }
 
+  /**
+   * Habilita comparacion insensible a mayusculas en `in`/`notIn`.
+   * @param enabled Estado (default true).
+   * @param message Mensaje personalizado (opcional).
+   */
   ignoreCase(
     enabled = true,
     message?: ConditionMessageInput<boolean, void>,
@@ -245,40 +330,80 @@ export class VStringNotNull extends Verifier<string> {
     });
   }
 
+  /**
+   * Devuelve un verificador que aplica `trim` al resultado.
+   * NOTA: al aplicar transformaciones se rompe la cadena fluente especifica de string.
+   */
   trim(): Verifier<string> {
     return this.transform((value) => value.trim());
   }
 
+  /**
+   * Devuelve un verificador que aplica `trimStart` al resultado.
+   */
   trimStart(): Verifier<string> {
     return this.transform((value) => value.trimStart());
   }
 
+  /**
+   * Devuelve un verificador que aplica `trimEnd` al resultado.
+   */
   trimEnd(): Verifier<string> {
     return this.transform((value) => value.trimEnd());
   }
 
+  /**
+   * Devuelve un verificador que convierte el string a minusculas.
+   */
   toLowerCase(): Verifier<string> {
     return this.transform((value) => value.toLowerCase());
   }
 
+  /**
+   * Devuelve un verificador que convierte el string a mayusculas.
+   */
   toUpperCase(): Verifier<string> {
     return this.transform((value) => value.toUpperCase());
   }
 
+  /**
+   * Elimina los acentos/diacriticos del string (normalizacion NFD + strip marks).
+   */
   removeAccents(): Verifier<string> {
     return this.transform((value) =>
       value.normalize("NFD").replace(/\p{M}/gu, ""),
     );
   }
 
+  /**
+   * Rellena el string al inicio hasta alcanzar `maxLength`.
+   * @param maxLength Longitud final esperada.
+   * @param fillString Caracter(es) de relleno (opcional).
+   */
   padStart(maxLength: number, fillString?: string): Verifier<string> {
     return this.transform((value) => value.padStart(maxLength, fillString));
   }
 
+  /**
+   * Rellena el string al final hasta alcanzar `maxLength`.
+   * @param maxLength Longitud final esperada.
+   * @param fillString Caracter(es) de relleno (opcional).
+   */
   padEnd(maxLength: number, fillString?: string): Verifier<string> {
     return this.transform((value) => value.padEnd(maxLength, fillString));
   }
 
+  /**
+   * Establece un valor por defecto.
+   * @param value Valor a utilizar cuando no haya dato.
+   */
+  default(value: string): VStringNotNull {
+    return new VStringNotNull({ ...this.cond, defaultValue: value });
+  }
+
+  /**
+   * @param cond Configuracion opcional.
+   */
   constructor(protected cond?: VStringConditions) {
     super(cond);
     this.badTypeMessage = {
@@ -288,7 +413,22 @@ export class VStringNotNull extends Verifier<string> {
   }
 }
 
+/**
+ * Verificador de string que acepta null/undefined (opcional).
+ * Espeja los metodos de `VStringNotNull`, pero propaga `null` cuando el dato esta ausente.
+ *
+ * @example
+ * ```ts
+ * Verifiers.String().check(null); // null
+ * Verifiers.String().required().check(null); // lanza error
+ * ```
+ */
 export class VString extends Verifier<string | null> {
+  /**
+   * Verifica el dato y retorna string o null cuando esta ausente.
+   * @param data Dato a verificar.
+   * @returns String verificado o null.
+   */
   check(data: any): string | null {
     let val = this.isRequired(data, undefined, this.cond?.defaultValue);
     if (val === null || val === undefined) {
@@ -434,5 +574,9 @@ export class VString extends Verifier<string | null> {
 
   required(): VStringNotNull {
     return new VStringNotNull(this.cond);
+  }
+
+  default(value: string): VStringNotNull {
+    return new VStringNotNull({ ...this.cond, defaultValue: value });
   }
 }

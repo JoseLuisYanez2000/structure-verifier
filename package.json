@@ -1,8 +1,9 @@
 {
   "name": "structure-verifier",
   "version": "1.0.0",
-  "description": "",
+  "description": "TypeScript schema verification library with type inference, chainable rules, and detailed error reporting by path.",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/JoseLuisYanez2000/structure-verifier.git"
@@ -14,8 +15,15 @@
     "test2": "tsc-watch --onSuccess \"node ./dist/index.test.js\"",
     "publicar": "npm run clean && npx tsc && npx jest && npm version patch && npm publish"
   },
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "keywords": [],
   "author": "Jose Luis Yañez Macias",

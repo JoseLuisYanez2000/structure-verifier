@@ -17,6 +17,15 @@ import {
 } from "../helpers/conditionMessage";
 import { Verifier } from "../verifier";
 
+/**
+ * Configuracion aceptada por los verificadores numericos.
+ * @property min Valor minimo aceptado (inclusive).
+ * @property max Valor maximo aceptado (inclusive).
+ * @property in Lista de valores permitidos.
+ * @property notIn Lista de valores no permitidos.
+ * @property maxDecimalPlaces Cantidad maxima de decimales.
+ * @property minDecimalPlaces Cantidad minima de decimales.
+ */
 export interface VNumberConditions
   extends VBadTypeMessage, VDefaultValue<number>, VVCIsRequired, IInfo<number> {
   min?: MessageType<number, { min: number }>;
@@ -77,6 +86,12 @@ const dMessages: VNumberDefaultMessages = {
   },
 };
 
+/**
+ * Lanza `VerificationError` usando el mensaje personalizado o el mensaje por defecto.
+ * @param condition Condicion con el mensaje personalizado.
+ * @param values Parametros para la funcion de mensaje.
+ * @param fallbackMessage Mensaje por defecto.
+ */
 function throwNumberError<T>(
   condition: MessageType<T, any> | string | undefined,
   values: any,
@@ -90,12 +105,29 @@ function throwNumberError<T>(
   ]);
 }
 
+/**
+ * Convierte el dato a numero y valida todas las condiciones numericas definidas.
+ * Rechaza booleanos, arrays, objetos, cadenas vacias, `NaN` e infinitos.
+ * @param data Dato a verificar.
+ * @param badTypeMessage Mensaje multilenguaje fallback para tipo invalido.
+ * @param conds Configuracion de la verificacion.
+ * @returns Valor numerico resultante.
+ */
 function vNumber(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
   conds?: VNumberConditions,
 ): number {
-  if (data === "" || isNaN(data)) {
+  if (
+    typeof data === "boolean" ||
+    Array.isArray(data) ||
+    (typeof data === "object" && data !== null) ||
+    data === "" ||
+    (typeof data !== "number" && typeof data !== "string") ||
+    (typeof data === "string" && data.trim() === "") ||
+    isNaN(Number(data)) ||
+    !Number.isFinite(Number(data))
+  ) {
     throwNumberError(conds?.badTypeMessage, undefined, badTypeMessage);
   }
 
@@ -155,7 +187,21 @@ function vNumber(
   return numericValue;
 }
 
+/**
+ * Verificador numerico que NO acepta null/undefined (siempre requerido).
+ * Admite condiciones: min, max, in, notIn, maxDecimalPlaces, minDecimalPlaces.
+ *
+ * @example
+ * ```ts
+ * Verifiers.NumberNotNull().min(0).max(100).check("50"); // 50
+ * ```
+ */
 export class VNumberNotNull extends Verifier<number> {
+  /**
+   * Verifica que el dato sea numerico y cumpla las condiciones configuradas.
+   * @param data Dato a verificar (number o string numerico).
+   * @returns Numero verificado.
+   */
   check(data: any): number {
     return vNumber(
       this.isRequired(data, true, this.cond?.defaultValue),
@@ -164,6 +210,11 @@ export class VNumberNotNull extends Verifier<number> {
     );
   }
 
+  /**
+   * Define el valor minimo permitido (inclusive).
+   * @param n Valor minimo.
+   * @param message Mensaje personalizado (opcional).
+   */
   min(
     n: number,
     message?: ConditionMessageInput<number, { min: number }>,
@@ -174,6 +225,11 @@ export class VNumberNotNull extends Verifier<number> {
     });
   }
 
+  /**
+   * Define el valor maximo permitido (inclusive).
+   * @param n Valor maximo.
+   * @param message Mensaje personalizado (opcional).
+   */
   max(
     n: number,
     message?: ConditionMessageInput<number, { max: number }>,
@@ -184,6 +240,11 @@ export class VNumberNotNull extends Verifier<number> {
     });
   }
 
+  /**
+   * Restringe los valores validos a la lista indicada.
+   * @param values Lista de valores permitidos.
+   * @param message Mensaje personalizado (opcional).
+   */
   in(
     values: number[],
     message?: ConditionMessageInput<number[], { in: number[] }>,
@@ -194,6 +255,11 @@ export class VNumberNotNull extends Verifier<number> {
     });
   }
 
+  /**
+   * Rechaza los valores indicados en la lista.
+   * @param values Lista de valores prohibidos.
+   * @param message Mensaje personalizado (opcional).
+   */
   notIn(
     values: number[],
     message?: ConditionMessageInput<number[], { notIn: number[] }>,
@@ -204,6 +270,11 @@ export class VNumberNotNull extends Verifier<number> {
     });
   }
 
+  /**
+   * Limita la cantidad maxima de decimales.
+   * @param n Numero maximo de decimales.
+   * @param message Mensaje personalizado (opcional).
+   */
   maxDecimalPlaces(
     n: number,
     message?: ConditionMessageInput<number, { maxDecimalPlaces: number }>,
@@ -217,6 +288,11 @@ export class VNumberNotNull extends Verifier<number> {
     });
   }
 
+  /**
+   * Exige una cantidad minima de decimales.
+   * @param n Numero minimo de decimales.
+   * @param message Mensaje personalizado (opcional).
+   */
   minDecimalPlaces(
     n: number,
     message?: ConditionMessageInput<number, { minDecimalPlaces: number }>,
@@ -230,13 +306,38 @@ export class VNumberNotNull extends Verifier<number> {
     });
   }
 
+  /**
+   * Establece un valor por defecto.
+   * @param value Valor a utilizar cuando no haya dato.
+   */
+  default(value: number): VNumberNotNull {
+    return new VNumberNotNull({ ...this.cond, defaultValue: value });
+  }
+
+  /**
+   * @param cond Configuracion opcional.
+   */
   constructor(protected cond?: VNumberConditions) {
     super(cond);
     this.badTypeMessage = dMessages.badTypeMessage;
   }
 }
 
+/**
+ * Verificador numerico que acepta null/undefined (opcional por defecto).
+ * Use `.required()` o `.default()` para obtener una variante `VNumberNotNull`.
+ *
+ * @example
+ * ```ts
+ * Verifiers.Number().min(1).check(null); // null
+ * ```
+ */
 export class VNumber extends Verifier<number | null> {
+  /**
+   * Verifica el dato y retorna numero o null cuando esta ausente.
+   * @param data Dato a verificar.
+   * @returns Numero verificado o null.
+   */
   check(data: any): number | null {
     let val = this.isRequired(data, undefined, this.cond?.defaultValue);
     if (val === null || val === undefined) {
@@ -245,6 +346,11 @@ export class VNumber extends Verifier<number | null> {
     return vNumber(val, this.badTypeMessage, this.cond);
   }
 
+  /**
+   * Define el valor minimo permitido (inclusive).
+   * @param n Valor minimo.
+   * @param message Mensaje personalizado (opcional).
+   */
   min(
     n: number,
     message?: ConditionMessageInput<number, { min: number }>,
@@ -255,6 +361,11 @@ export class VNumber extends Verifier<number | null> {
     });
   }
 
+  /**
+   * Define el valor maximo permitido (inclusive).
+   * @param n Valor maximo.
+   * @param message Mensaje personalizado (opcional).
+   */
   max(
     n: number,
     message?: ConditionMessageInput<number, { max: number }>,
@@ -265,6 +376,11 @@ export class VNumber extends Verifier<number | null> {
     });
   }
 
+  /**
+   * Restringe los valores validos a la lista indicada.
+   * @param values Lista de valores permitidos.
+   * @param message Mensaje personalizado (opcional).
+   */
   in(
     values: number[],
     message?: ConditionMessageInput<number[], { in: number[] }>,
@@ -275,6 +391,11 @@ export class VNumber extends Verifier<number | null> {
     });
   }
 
+  /**
+   * Rechaza los valores indicados en la lista.
+   * @param values Lista de valores prohibidos.
+   * @param message Mensaje personalizado (opcional).
+   */
   notIn(
     values: number[],
     message?: ConditionMessageInput<number[], { notIn: number[] }>,
@@ -285,6 +406,11 @@ export class VNumber extends Verifier<number | null> {
     });
   }
 
+  /**
+   * Limita la cantidad maxima de decimales.
+   * @param n Numero maximo de decimales.
+   * @param message Mensaje personalizado (opcional).
+   */
   maxDecimalPlaces(
     n: number,
     message?: ConditionMessageInput<number, { maxDecimalPlaces: number }>,
@@ -298,6 +424,11 @@ export class VNumber extends Verifier<number | null> {
     });
   }
 
+  /**
+   * Exige una cantidad minima de decimales.
+   * @param n Numero minimo de decimales.
+   * @param message Mensaje personalizado (opcional).
+   */
   minDecimalPlaces(
     n: number,
     message?: ConditionMessageInput<number, { minDecimalPlaces: number }>,
@@ -311,12 +442,26 @@ export class VNumber extends Verifier<number | null> {
     });
   }
 
+  /**
+   * @param cond Configuracion opcional.
+   */
   constructor(protected cond?: VNumberConditions) {
     super(cond);
     this.badTypeMessage = dMessages.badTypeMessage;
   }
 
+  /**
+   * Convierte el verificador en su variante `VNumberNotNull` (requerido).
+   */
   required(): VNumberNotNull {
     return new VNumberNotNull(this.cond);
+  }
+
+  /**
+   * Establece un valor por defecto. Resultado: `VNumberNotNull`.
+   * @param value Valor a utilizar cuando no haya dato.
+   */
+  default(value: number): VNumberNotNull {
+    return new VNumberNotNull({ ...this.cond, defaultValue: value });
   }
 }

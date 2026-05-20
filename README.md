@@ -1,6 +1,6 @@
 # structure-verifier
 
-Libreria de validacion para TypeScript orientada a esquemas declarativos, tipado inferido y errores detallados por ruta.
+Libreria de verificacion para TypeScript orientada a esquemas declarativos, tipado inferido y errores detallados por ruta.
 
 Ideal para validar payloads de API, formularios, configuraciones y estructuras anidadas.
 
@@ -21,7 +21,9 @@ Este README está diseñado para ayudarte a:
 - [Conceptos clave](#conceptos-clave)
 - [API publica](#api-publica)
 - [Estilos de uso](#estilos-de-uso)
-- [Validadores disponibles](#validadores-disponibles)
+- [Verificadores disponibles](#verificadores-disponibles)
+- [refine: reglas personalizadas](#refine-reglas-personalizadas)
+- [default: valores por defecto](#default-valores-por-defecto)
 - [Transformaciones](#transformaciones)
 - [Tipado inferido](#tipado-inferido)
 - [Manejo de errores](#manejo-de-errores)
@@ -84,13 +86,13 @@ try {
 
 ### 1) Nullable vs NotNull
 
-- `VNumber`, `VString`, `VBoolean`, `VDate`, `VUUID`, `VArray`, `VObject` y `VAny` pueden devolver `null`.
+- `VNumber`, `VString`, `VBoolean`, `VDate`, `VUUID`, `VArray`, `VObject`, `VAny` y `VDateRange` pueden devolver `null`.
 - Las variantes `NotNull` devuelven siempre tipo requerido.
-- En validadores nullable puedes promover a requerido con `.required()`.
+- En verificadores nullable puedes promover a requerido con `.required()` o `.default(value)`.
 
 ### 2) Inmutabilidad de reglas
 
-Cada metodo de regla devuelve una nueva instancia del validador.
+Cada metodo de regla devuelve una nueva instancia del verificador.
 
 ```ts
 const base = V.StringNotNull();
@@ -101,11 +103,11 @@ const withMin = base.minLength(3);
 
 ### 3) Reglas transversales
 
-Muchos validadores comparten estas opciones:
+Muchos verificadores comparten estas opciones:
 
 - `isRequired`: fuerza existencia del valor.
-- `emptyAsNull`: transforma `""` a `null` antes de validar.
-- `defaultValue`: valor por defecto para `undefined` y ciertos casos de `null`.
+- `emptyAsNull`: transforma `""` a `null` antes de verificar.
+- `defaultValue`: valor por defecto para `undefined` y ciertos casos de `null` (tambien disponible via `.default(value)`).
 - `badTypeMessage`: reemplaza mensaje de tipo invalido.
 
 ### 4) Mensajes personalizados
@@ -119,6 +121,14 @@ Puedes pasar mensajes como:
 ```ts
 const age = V.NumberNotNull().min(18, (v) => `Edad minima: ${v.min}`);
 ```
+
+### 5) Metodos universales
+
+Todos los verificadores heredan de `Verifier<T>` y exponen:
+
+- `.check(data)`: ejecuta la verificacion y retorna el valor tipado o lanza `VerificationError`.
+- `.transform(mapper)`: postprocesa la salida con una funcion.
+- `.refine(predicate, message?, keys?)`: agrega una regla personalizada que recibe el valor ya verificado.
 
 ## API publica
 
@@ -144,6 +154,8 @@ import {
   VBooleanNotNull,
   VDate,
   VDateNotNull,
+  VDateRange,
+  VDateRangeNotNull,
   VNumber,
   VNumberNotNull,
   VObject,
@@ -156,17 +168,19 @@ import {
 } from "structure-verifier";
 ```
 
-Tambien se exportan estos tipos de condiciones:
+Tambien se exportan estos tipos:
 
 - `VAnyConditions`
 - `VArrayConditions`
 - `VBooleanConditions`
 - `VDateConditions`
+- `VDateRangeConditions`
 - `VNumberConditions`
 - `VObjectConditions`
 - `VObjectConditionsNotNull`
 - `VStringConditions`
 - `VUUIDConditions`
+- `DateRange`, `StrictDateRange`, `MaxSpan`, `MaxSpanUnit`
 
 ## Estilos de uso
 
@@ -195,7 +209,7 @@ const a = V.NumberNotNull({ min: 1 });
 const b = new V.NumberNotNull({ min: 1 });
 ```
 
-## Validadores disponibles
+## Verificadores disponibles
 
 ### Number / NumberNotNull
 
@@ -217,7 +231,7 @@ Reglas:
 Comportamiento importante:
 
 - Convierte con `Number(data)`.
-- Rechaza `""` y valores `NaN`.
+- Rechaza booleanos, arrays, objetos, `""`, strings con solo whitespace, `NaN` e `Infinity/-Infinity`.
 
 ### String / StringNotNull
 
@@ -277,6 +291,7 @@ Reglas:
 
 Comportamiento importante:
 
+- Exige que el dato sea de tipo `string`; no coerciona numeros, symbols u objetos.
 - Normaliza salida a minusculas con formato `8-4-4-4-12`.
 - Si `allowNoHyphens` es `false`, exige UUID con guiones.
 
@@ -300,6 +315,50 @@ Comportamiento importante:
 - Soporta entrada `number`, `string`, `Date` y `datetime.Dayjs`.
 - Si no defines `timeZone`, usa `UTC`.
 - Si el `format` no incluye zona horaria, aplica la zona configurada.
+- Cualquier error interno de dayjs (zonas invalidas, fechas mal formadas) se reporta como `VerificationError`.
+
+### DateRange / DateRangeNotNull
+
+Salida:
+
+- `VDateRange`: `DateRange | null`
+- `VDateRangeNotNull`: `DateRange`
+- `.strict()` en `VDateRangeNotNull` devuelve un verificador que retorna `StrictDateRange` (ambos extremos no-null).
+
+Donde:
+
+```ts
+interface DateRange { from: datetime.Dayjs | null; to: datetime.Dayjs | null; }
+interface StrictDateRange { from: datetime.Dayjs; to: datetime.Dayjs; }
+```
+
+Reglas (fluentes y por configuracion):
+
+- `format`
+- `separator` (default `"|"`)
+- `timeZone`
+- `minDate`, `maxDate`
+- `maxSpan` (`{ value, unit: "second"|"minute"|"hour"|"day"|"week"|"month"|"year" }`)
+- `requireFrom`, `requireTo`
+- `autoSwap` (intercambia si `from > to`)
+- `exclusiveEnd` (compara `maxSpan` con `>` en vez de `>=`)
+- `maxInputLength` (default `1024`, defensa contra inputs gigantes)
+- reglas transversales
+
+Comportamiento importante:
+
+- Acepta 3 formas de entrada: string `from|to`, tupla `[from, to]` u objeto `{ from, to }`.
+- Errores se reportan con `key` especifica: `"from"`, `"to"` o `"range"` para poder enlazarlos a campos de UI.
+- Mensajes de formato son "lado-aware" (inicial/final en es, start/end en en).
+
+```ts
+const range = V.DateRangeNotNull({ format: "YYYY-MM-DD" })
+  .maxSpan({ value: 30, unit: "day" })
+  .check("2026-01-01|2026-01-20");
+
+const strict = V.DateRangeNotNull({ format: "YYYY-MM-DD" }).strict();
+const r = strict.check("2026-01-01|2026-12-31"); // r.from y r.to son Dayjs no-null
+```
 
 ### Array / ArrayNotNull
 
@@ -318,6 +377,7 @@ Comportamiento importante:
 
 - Valida item por item con el verificador interno.
 - En errores anidados agrega rutas como `[0]`, `[1].name`, etc.
+- Errores que no sean `VerificationError` (p. ej. `TypeError`) lanzados por el verificador interno se propagan sin alterarse.
 
 ### Object / ObjectNotNull
 
@@ -338,9 +398,10 @@ Reglas:
 Comportamiento importante:
 
 - `strictMode`: rechaza propiedades no declaradas.
-- `ignoreCase`: permite mapear llaves sin distinguir mayusculas/minusculas.
+- `ignoreCase`: mapea llaves sin distinguir mayusculas/minusculas; lanza error explicito si el input trae duplicados case-insensitive (ej. `foo` y `FOO`).
 - `takeAllValues`: conserva propiedades extra en la salida.
-- `conds`: ejecuta validacion de negocio final sobre el objeto ya validado.
+- `conds`: ejecuta verificacion de negocio final sobre el objeto. Si lanza un error no-`VerificationError`, este se envuelve automaticamente. Tambien se ejecuta cuando el dato es `null`/`undefined` (recibe el valor real, no un null forzado).
+- Soporta `.refine(predicate, message?, keys?)` con `keys` tipadas (autocompletado sobre las propiedades del esquema).
 
 ### Any
 
@@ -352,9 +413,64 @@ Reglas:
 
 - reglas transversales
 
+## refine: reglas personalizadas
+
+`refine` agrega un predicado custom que se ejecuta despues de la verificacion estandar. Si el predicado devuelve `false`, lanza `VerificationError` con el mensaje y key indicados.
+
+```ts
+// En un verificador escalar
+const evenV = V.NumberNotNull().refine((n) => n % 2 === 0, "debe ser par");
+
+// Mensaje con i18n (segun VerifierConfig.lang)
+const evenI18n = V.NumberNotNull().refine((n) => n % 2 === 0, {
+  es: () => "debe ser par",
+  en: () => "must be even",
+});
+
+// Asociar el error a una key especifica
+const usernameV = V.StringNotNull().refine(
+  (v) => v.length >= 3,
+  "muy corto",
+  "username",
+);
+```
+
+En `VObject` / `VObjectNotNull` las `keys` son tipadas sobre el esquema, lo que permite reglas cruzadas con autocompletado:
+
+```ts
+const signupV = V.ObjectNotNull({
+  password: V.StringNotNull({ minLength: 8 }),
+  confirm: V.StringNotNull(),
+}).refine(
+  (v) => v.password === v.confirm,
+  "las contraseñas no coinciden",
+  "confirm",
+);
+```
+
+Comportamiento importante:
+
+- Si la verificacion base falla, el predicado **no** se ejecuta.
+- `refine` se puede encadenar varias veces.
+- Combina con `transform`: el predicado ve el valor ya verificado (pero antes de transformar).
+
+## default: valores por defecto
+
+Todos los verificadores exponen `.default(value)`. En las variantes nullable, este metodo **promueve** la salida a la variante `NotNull` correspondiente, porque a partir de ese momento el valor nunca puede ser ausente.
+
+```ts
+const ageV = V.Number().default(0);
+// inferido como Verifier<number> (no number | null)
+
+const cfgV = V.ObjectNotNull({ retries: V.NumberNotNull() }).default({ retries: 3 });
+const cfg = cfgV.check(undefined); // { retries: 3 }
+```
+
+Se aplica cuando el dato es `undefined` o (en presencia de default) tambien para `null`.
+
 ## Transformaciones
 
-La clase base `Verifier` incluye `transform(mapper)` para postprocesar salida validada.
+La clase base `Verifier` incluye `transform(mapper)` para postprocesar salida verificada.
 
 `VString` y `VStringNotNull` incluyen helpers:
 
@@ -403,7 +519,7 @@ type NumberRequired = InferFactoryType<typeof V.NumberNotNull>;
 
 ## Manejo de errores
 
-Cuando una validacion falla se lanza `VerificationError`.
+Cuando una verificacion falla se lanza `VerificationError`.
 
 Campos principales:
 
@@ -463,10 +579,17 @@ console.log(utc);
 
 - Define siempre `strictMode: true` en payloads de entrada externa.
 - Usa variantes `NotNull` en campos de negocio obligatorios.
-- Agrega reglas semanticas con `conds` para validaciones cruzadas.
+- Agrega reglas semanticas con `refine` (recomendado) o `conds` para verificaciones cruzadas.
 - Encadena normalizaciones (`trim`, `toLowerCase`, etc.) para salida consistente.
 - Centraliza mensajes custom cuando quieras UX de errores uniforme.
 - Cubre cada esquema critico con pruebas de casos validos e invalidos.
+- Reutiliza esquemas con `InferType` para mantener un solo "source of truth" entre runtime y tipos.
+
+## Scripts de desarrollo
+
+- `npm run clean`: limpia `dist/`.
+- `npm test`: limpia, compila y ejecuta los tests con Jest.
+- `npm run dev`: compila y ejecuta `dist/test/test.js` en modo watch.
 
 ## Licencia
 

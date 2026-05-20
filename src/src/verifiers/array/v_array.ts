@@ -19,6 +19,12 @@ import { VAny } from "../any/v_any";
 import { VObject, VObjectNotNull } from "../object/v_object";
 import { Verifier } from "../verifier";
 
+/**
+ * Configuracion aceptada por los verificadores de array.
+ * @typeParam T Verificador usado para cada elemento del array.
+ * @property minLength Cantidad minima de elementos.
+ * @property maxLength Cantidad maxima de elementos.
+ */
 export interface VArrayConditions<T extends Verifier<any>>
   extends
     VBadTypeMessage,
@@ -53,6 +59,10 @@ const dMessages: VArrayDefaultMessages = {
   },
 };
 
+/**
+ * Indica si el verificador de item es de tipo anidado (objeto, array, any).
+ * Se usa para construir correctamente la ruta de error (ej. `[0].nombre`).
+ */
 function isNestedVerifier(verifier: Verifier<any>) {
   return (
     verifier instanceof VObject ||
@@ -63,11 +73,25 @@ function isNestedVerifier(verifier: Verifier<any>) {
   );
 }
 
+/**
+ * Construye el key del error anteponiendo la posicion del elemento.
+ * @param index Indice del elemento en el array.
+ * @param key Key original reportado por el verificador interno.
+ */
 function prefixArrayErrorKey(index: number, key?: string) {
   const baseKey = `[${index}]`;
   return key ? `${baseKey}.${key}` : baseKey;
 }
 
+/**
+ * Verifica que el dato sea un array y que cada elemento cumpla con el `verifier`.
+ * Agrega a los errores la ruta `[i]` (o `[i].campo`) para poder identificarlos.
+ * @param data Dato a verificar.
+ * @param badTypeMessage Mensaje fallback para cuando no sea array.
+ * @param verifier Verificador aplicado a cada elemento.
+ * @param conds Configuracion del array.
+ * @returns Nuevo array con los elementos verificados/transformados.
+ */
 function vArray<T extends Verifier<any>>(
   data: any,
   badTypeMessage: IMessageLanguage<void>,
@@ -136,6 +160,8 @@ function vArray<T extends Verifier<any>>(
             };
           }),
         );
+      } else {
+        throw error;
       }
     }
   }
@@ -146,17 +172,41 @@ function vArray<T extends Verifier<any>>(
   return value;
 }
 
+/**
+ * Verificador de array opcional (admite null/undefined).
+ * Cada elemento es verificado con el `verifier` indicado.
+ *
+ * @typeParam T Verificador usado para cada elemento.
+ * @example
+ * ```ts
+ * Verifiers.Array(Verifiers.StringNotNull()).minLength(1).check(["a"]);
+ * ```
+ */
 export class VArray<T extends Verifier<any>> extends Verifier<
   ReturnType<T["check"]>[] | null
 > {
+  /**
+   * Verifica el dato como array (o propaga null si esta ausente).
+   * @param data Dato a verificar.
+   * @returns Array verificado o null.
+   */
   check(data: any): ReturnType<T["check"]>[] | null {
-    const validatedData = this.isRequired(data);
-    if (validatedData === null) {
+    const validatedData = this.isRequired(
+      data,
+      undefined,
+      this.cond?.defaultValue,
+    );
+    if (validatedData === null || validatedData === undefined) {
       return null;
     }
     return vArray(validatedData, this.badTypeMessage, this.verifier, this.cond);
   }
 
+  /**
+   * Define la cantidad minima de elementos.
+   * @param n Cantidad minima.
+   * @param message Mensaje personalizado (opcional).
+   */
   minLength(
     n: number,
     message?: ConditionMessageInput<number, { minLength: number }>,
@@ -167,6 +217,11 @@ export class VArray<T extends Verifier<any>> extends Verifier<
     });
   }
 
+  /**
+   * Define la cantidad maxima de elementos.
+   * @param n Cantidad maxima.
+   * @param message Mensaje personalizado (opcional).
+   */
   maxLength(
     n: number,
     message?: ConditionMessageInput<number, { maxLength: number }>,
@@ -177,6 +232,10 @@ export class VArray<T extends Verifier<any>> extends Verifier<
     });
   }
 
+  /**
+   * @param verifier Verificador aplicado a cada item del array.
+   * @param cond Configuracion opcional del array.
+   */
   constructor(
     protected verifier: T,
     protected cond: VArrayConditions<T> = {} as any,
@@ -185,19 +244,53 @@ export class VArray<T extends Verifier<any>> extends Verifier<
     this.badTypeMessage = dMessages.badTypeMessage;
   }
 
+  /**
+   * Convierte el verificador en su variante `VArrayNotNull` (requerido).
+   */
   required(): VArrayNotNull<T> {
     return new VArrayNotNull<T>(this.verifier, this.cond);
   }
+
+  /**
+   * Establece un array por defecto cuando el dato sea ausente.
+   * @param value Valor por defecto.
+   */
+  default(value: ReturnType<T["check"]>[]): VArrayNotNull<T> {
+    return new VArrayNotNull<T>(this.verifier, {
+      ...this.cond,
+      defaultValue: value,
+    });
+  }
 }
 
+/**
+ * Verificador de array que NO acepta null/undefined (siempre requerido).
+ * Cada elemento es verificado con el `verifier` indicado.
+ *
+ * @typeParam T Verificador usado para cada elemento.
+ */
 export class VArrayNotNull<T extends Verifier<any>> extends Verifier<
   ReturnType<T["check"]>[]
 > {
+  /**
+   * Verifica el dato como array. Lanza si es null/undefined.
+   * @param data Dato a verificar.
+   * @returns Array verificado.
+   */
   check(data: any): ReturnType<T["check"]>[] {
-    const validatedData = this.isRequired(data, true);
+    const validatedData = this.isRequired(
+      data,
+      true,
+      this.cond?.defaultValue,
+    );
     return vArray(validatedData, this.badTypeMessage, this.verifier, this.cond);
   }
 
+  /**
+   * Define la cantidad minima de elementos.
+   * @param n Cantidad minima.
+   * @param message Mensaje personalizado (opcional).
+   */
   minLength(
     n: number,
     message?: ConditionMessageInput<number, { minLength: number }>,
@@ -208,6 +301,11 @@ export class VArrayNotNull<T extends Verifier<any>> extends Verifier<
     });
   }
 
+  /**
+   * Define la cantidad maxima de elementos.
+   * @param n Cantidad maxima.
+   * @param message Mensaje personalizado (opcional).
+   */
   maxLength(
     n: number,
     message?: ConditionMessageInput<number, { maxLength: number }>,
@@ -218,11 +316,26 @@ export class VArrayNotNull<T extends Verifier<any>> extends Verifier<
     });
   }
 
+  /**
+   * @param verifier Verificador aplicado a cada item del array.
+   * @param cond Configuracion opcional del array.
+   */
   constructor(
     protected verifier: T,
     protected cond: VArrayConditions<T> = {} as any,
   ) {
     super(cond);
     this.badTypeMessage = dMessages.badTypeMessage;
+  }
+
+  /**
+   * Establece un array por defecto cuando el dato sea ausente.
+   * @param value Valor por defecto.
+   */
+  default(value: ReturnType<T["check"]>[]): VArrayNotNull<T> {
+    return new VArrayNotNull<T>(this.verifier, {
+      ...this.cond,
+      defaultValue: value,
+    });
   }
 }
