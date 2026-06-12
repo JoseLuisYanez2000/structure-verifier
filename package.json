@@ -16,13 +16,21 @@
     "publicar": "npm run clean && npx tsc && npx jest && npm version patch && npm publish"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/test/",
+    "!dist/**/*.js.map"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./fastify": {
+      "types": "./dist/fastify.d.ts",
+      "require": "./dist/fastify.js",
+      "default": "./dist/fastify.js"
     }
   },
   "keywords": [],
@@ -31,6 +39,7 @@
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.20",
+    "fastify": "^5.8.5",
     "jest": "^29.7.0",
     "rimraf": "^5.0.5",
     "ts-jest": "^29.1.2",
@@ -39,5 +48,13 @@
   },
   "dependencies": {
     "dayjs": "^1.11.19"
+  },
+  "peerDependencies": {
+    "fastify": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "fastify": {
+      "optional": true
+    }
   }
 }

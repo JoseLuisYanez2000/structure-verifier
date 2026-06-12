@@ -15,6 +15,17 @@ import {
 export type RefineMessage = string | IMessageLanguage<void>;
 
 /**
+ * Resultado de una verificacion segura (`safeCheck`).
+ * Discriminado por `success`: cuando es `true` expone `value` tipado;
+ * cuando es `false` expone el `VerificationError` capturado.
+ *
+ * @typeParam T Tipo del valor verificado.
+ */
+export type SafeCheckResult<T> =
+  | { success: true; value: T }
+  | { success: false; error: VerificationError };
+
+/**
  * Mensaje por defecto utilizado cuando `refine` no recibe mensaje personalizado.
  */
 const defaultRefineMessage: IMessageLanguage<void> = {
@@ -77,6 +88,32 @@ export abstract class Verifier<T> {
    * @returns Valor verificado y transformado al tipo `T`.
    */
   abstract check(data: any): T;
+
+  /**
+   * Verifica el dato recibido sin lanzar excepciones de validacion.
+   * Ejecuta `check` y captura unicamente `VerificationError`; cualquier otro
+   * error (de programacion) se propaga tal cual.
+   *
+   * @param data Dato a verificar (cualquier tipo).
+   * @returns `{ success: true, value }` si la verificacion pasa,
+   *          `{ success: false, error }` con el `VerificationError` si falla.
+   *
+   * @example
+   * ```ts
+   * const r = Verifiers.NumberNotNull().min(0).safeCheck("-1");
+   * if (!r.success) console.log(r.error.errorsObj);
+   * ```
+   */
+  safeCheck(data: any): SafeCheckResult<T> {
+    try {
+      return { success: true, value: this.check(data) };
+    } catch (error) {
+      if (error instanceof VerificationError) {
+        return { success: false, error };
+      }
+      throw error;
+    }
+  }
 
   /**
    * Mensaje por defecto cuando el tipo de dato no es el esperado.

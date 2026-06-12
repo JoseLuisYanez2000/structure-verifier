@@ -27,6 +27,8 @@ Este README está diseñado para ayudarte a:
 - [Transformaciones](#transformaciones)
 - [Tipado inferido](#tipado-inferido)
 - [Manejo de errores](#manejo-de-errores)
+- [safeCheck: verificacion sin excepciones](#safecheck-verificacion-sin-excepciones)
+- [Uso con Fastify](#uso-con-fastify)
 - [datetime (dayjs)](#datetime-dayjs)
 - [Buenas practicas para v1.0.0](#buenas-practicas-para-v100)
 - [Scripts de desarrollo](#scripts-de-desarrollo)
@@ -558,6 +560,78 @@ Posible salida en `errorsObj`:
   { key: "extra", message: "no es una propiedad valida" },
 ];
 ```
+
+## safeCheck: verificacion sin excepciones
+
+Todos los verificadores exponen `safeCheck`, que ejecuta `check` y captura
+unicamente `VerificationError` (otros errores se propagan). Retorna un
+resultado discriminado por `success`:
+
+```ts
+const result = V.NumberNotNull().min(0).safeCheck("42");
+
+if (result.success) {
+  console.log(result.value); // 42 (tipado)
+} else {
+  console.log(result.error.errorsObj); // VerificationError
+}
+```
+
+## Uso con Fastify
+
+La libreria incluye un adaptador en el subpath `structure-verifier/fastify`
+(requiere tener `fastify` instalado; es peer dependency opcional):
+
+- `validatorCompiler`: valida `body`, `querystring`, `params` y `headers`
+  declarados como `Verifier`. Un fallo responde 400 con codigo
+  `FST_ERR_VALIDATION`.
+- `serializerCompiler`: si `schema.response` es un `Verifier`, valida y
+  transforma la salida antes de serializar; cualquier otro schema se
+  serializa con `JSON.stringify`.
+- `StructureVerifierTypeProvider`: tipa `request.body`, `request.query`, etc.
+  por inferencia del verificador de la ruta.
+- `hasStructureVerifierValidationErrors`: type guard para error handlers;
+  expone `error.validation` con items `{ instancePath, message }` al estilo
+  Ajv (ej. `tags.[1]` se reporta como `/tags/1`).
+
+```ts
+import Fastify from "fastify";
+import { Verifiers as V } from "structure-verifier";
+import {
+  validatorCompiler,
+  serializerCompiler,
+  hasStructureVerifierValidationErrors,
+  StructureVerifierTypeProvider,
+} from "structure-verifier/fastify";
+
+const app = Fastify().withTypeProvider<StructureVerifierTypeProvider>();
+app.setValidatorCompiler(validatorCompiler);
+app.setSerializerCompiler(serializerCompiler);
+
+app.setErrorHandler((err, req, reply) => {
+  if (hasStructureVerifierValidationErrors(err)) {
+    return reply.status(400).send({ errors: err.validation });
+  }
+  reply.send(err);
+});
+
+const userVerifier = V.ObjectNotNull({
+  name: V.StringNotNull({ minLength: 2 }).trim(),
+  age: V.Number({ min: 0 }),
+});
+
+app.post("/users", { schema: { body: userVerifier } }, async (req) => {
+  // req.body tipado: { name: string; age: number | null }
+  return req.body;
+});
+```
+
+Notas:
+
+- `querystring` y `params` llegan como strings; la coercion de la libreria
+  (`"42"` -> `42`) aplica automaticamente.
+- Para respuestas, declare `schema.response[200]` con un `Verifier` si desea
+  validar/transformar la salida; un fallo ahi produce 500.
 
 ## datetime (dayjs)
 

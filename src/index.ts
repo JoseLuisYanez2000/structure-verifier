@@ -47,6 +47,7 @@ export { VerificationError } from "./src/error/v_error";
 export { InferFactoryType, InferType } from "./src/verifiers/type";
 
 export { Verifier } from "./src/verifiers/verifier";
+export type { SafeCheckResult, RefineMessage } from "./src/verifiers/verifier";
 export type { VAnyConditions } from "./src/verifiers/any/v_any";
 export type { VArrayConditions } from "./src/verifiers/array/v_array";
 export type { VBooleanConditions } from "./src/verifiers/boolean/v_boolean";
