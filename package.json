@@ -1,6 +1,6 @@
 {
   "name": "structure-verifier",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "TypeScript schema verification library with type inference, chainable rules, and detailed error reporting by path.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
