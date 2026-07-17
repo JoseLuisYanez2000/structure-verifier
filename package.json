@@ -13,7 +13,7 @@
     "clean": "rimraf dist/",
     "test": "npm run clean && npx tsc && npx jest",
     "test2": "tsc-watch --onSuccess \"node ./dist/index.test.js\"",
-    "publicar": "npm run clean && npx tsc && npx jest && npm version patch && npm publish"
+    "publicar": "npm run clean && npx tsc && npx jest && npm version patch && powershell -ExecutionPolicy Bypass -File ./scripts/publish.ps1"
   },
   "files": [
     "dist",

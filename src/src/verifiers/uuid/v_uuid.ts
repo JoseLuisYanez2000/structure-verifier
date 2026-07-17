@@ -18,13 +18,13 @@ import {
 
 /**
  * Configuracion aceptada por los verificadores de UUID.
- * @property version Restringe la verificacion a una version especifica de UUID (1..5).
+ * @property version Restringe la verificacion a una version especifica de UUID (1..8, RFC 9562).
  * @property allowNoHyphens Permite aceptar UUIDs sin guiones (formato compacto de 32 chars).
  * @property strictMode Cuando es true, exige que el dato ya sea string (no se convierte).
  */
 export interface VUUIDConditions
   extends VBadTypeMessage, VDefaultValue<string>, VVCIsRequired {
-  version?: 1 | 2 | 3 | 4 | 5;
+  version?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   allowNoHyphens?: boolean;
   strictMode?: MessageType<boolean, void>;
 }
@@ -120,7 +120,11 @@ function ensureUUIDLength(normalizedUuid: string) {
 
 /**
  * Obtiene (y cachea) la expresion regular para validar la version del UUID.
- * Si `version` es undefined, acepta cualquier version entre 1 y 5.
+ * Si `version` es undefined, acepta CUALQUIER UUID bien formado: RFC 9562
+ * define v1..v8 (ademas del nil y max UUID), asi que no se restringe el nibble
+ * de version ni el de variante — de la longitud y el formato 8-4-4-4-12 ya se
+ * encargan `ensureUUIDLength`/`ensureUUIDHyphenPolicy`. Con una version
+ * explicita si se exige el nibble de version y la variante RFC (10xx = [89ab]).
  */
 function getUUIDRegex(version?: VUUIDConditions["version"]) {
   const cacheKey = version === undefined ? "any" : String(version);
@@ -129,11 +133,13 @@ function getUUIDRegex(version?: VUUIDConditions["version"]) {
     return cached;
   }
 
-  const versionPattern = version ?? "[1-5]";
-  const created = new RegExp(
-    `^[0-9a-f]{8}[0-9a-f]{4}${versionPattern}[0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$`,
-    "i",
-  );
+  const created =
+    version === undefined
+      ? /^[0-9a-f]{32}$/i
+      : new RegExp(
+          `^[0-9a-f]{8}[0-9a-f]{4}${version}[0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$`,
+          "i",
+        );
   UUID_REGEX_CACHE.set(cacheKey, created);
   return created;
 }
@@ -230,9 +236,9 @@ export class VUUIDNotNull extends Verifier<string> {
 
   /**
    * Restringe la verificacion a una version especifica del UUID.
-   * @param v Version permitida (1..5).
+   * @param v Version permitida (1..8, RFC 9562).
    */
-  version(v: 1 | 2 | 3 | 4 | 5): VUUIDNotNull {
+  version(v: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): VUUIDNotNull {
     return new VUUIDNotNull({ ...this.cond, version: v });
   }
 
@@ -292,9 +298,9 @@ export class VUUID extends Verifier<string | null> {
   }
 
   /**
-   * Restringe la verificacion a una version especifica (1..5).
+   * Restringe la verificacion a una version especifica (1..8, RFC 9562).
    */
-  version(v: 1 | 2 | 3 | 4 | 5): VUUID {
+  version(v: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): VUUID {
     return new VUUID({ ...this.cond, version: v });
   }
 

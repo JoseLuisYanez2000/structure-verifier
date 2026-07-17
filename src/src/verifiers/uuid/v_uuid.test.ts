@@ -125,4 +125,24 @@ describe("VUUIDNotNull", () => {
       "550e8400-e29b-41d4-a716-446655440000",
     );
   });
+
+  // RFC 9562: sin version explicita se acepta cualquier UUID bien formado.
+  // Las PKs de negocio (util.uuid_v7 en la BD) son v7: el nibble de version es
+  // 7 y antes se rechazaban por el patron [1-5] heredado.
+  it("should accept a UUID v7 when no version is pinned", () => {
+    const uuidV7 = "018f6d3c-7b2a-7c1d-9e4f-2a6b8c0d1e2f";
+    expect(V.UUIDNotNull().check(uuidV7)).toBe(uuidV7);
+  });
+
+  it("should accept a UUID v7 when version 7 is pinned", () => {
+    const uuidV7 = "018f6d3c-7b2a-7c1d-9e4f-2a6b8c0d1e2f";
+    expect(V.UUIDNotNull().version(7).check(uuidV7)).toBe(uuidV7);
+  });
+
+  it("should reject a v7 UUID when version 4 is pinned", () => {
+    const uuidV7 = "018f6d3c-7b2a-7c1d-9e4f-2a6b8c0d1e2f";
+    expect(() => V.UUIDNotNull().version(4).check(uuidV7)).toThrow(
+      VerificationError,
+    );
+  });
 });
